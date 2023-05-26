@@ -1,0 +1,12 @@
+# common ignore
+build/
+dist/
+*.egg-info
+*.egg
+*.eggs
+__pycache__/
+.venv
+.DS_Store
+
+# PyCharm
+.idea
