@@ -6,15 +6,7 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 27/05/23 11:26 am
 """
-from pytest import fixture
-from flask import Flask
 from flask_shopify_utils import ShopifyUtil
-
-
-@fixture
-def app():
-    app_instance = Flask(__name__)
-    return app_instance
 
 
 def test_init_null_config(app):
