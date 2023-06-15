@@ -8,6 +8,10 @@
 """
 from os import environ
 from datetime import datetime
+from time import sleep
+from sgqlc.operation import Operation
+from sgqlc.endpoint.http import HTTPEndpoint
+from urllib.error import HTTPError, URLError
 from shopify import ApiVersion
 
 
@@ -44,3 +48,37 @@ def get_version(version: str = None, restful: bool = False) -> str:
         if version not in versions:
             version = versions[0]
     return version
+
+
+class GraphQLClient:
+    def __init__(self, app_url: str, token: str, timeout: int = 15):
+        self.version = get_version()
+        self.timeout = timeout
+        self.url = f'https://{app_url}/admin/api/{self.version}/graphql.json'
+        self.headers = {'X-Shopify-Access-Token': token}
+        self._client = HTTPEndpoint(self.url, self.headers, timeout)
+
+    @property
+    def client(self):
+        return self._client
+
+    def fetch_data(self, query: Operation, timeout: int = None, attempts: int = 5):
+        try:
+            result = self.client(query, timeout=timeout if timeout else self.timeout)
+            if 'errors' in result.keys():
+                if result['errors'][0]['message'] == 'Throttled':
+                    if attempts <= 0:
+                        raise Exception(result)
+                    sleep(2)
+                    attempts -= 1
+                    return self.fetch_data(query, timeout, attempts)
+                raise Exception(result)
+            else:
+                return result['data']
+        except (HTTPError, URLError) as e:
+            if attempts <= 0:
+                raise e
+            sleep(1)
+            attempts -= 1
+            return self.fetch_data(query, timeout, attempts)
+
