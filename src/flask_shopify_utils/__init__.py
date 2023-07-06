@@ -6,7 +6,7 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 26/05/23 1:43 pm
 """
-import os
+from os import path, getcwd, environ
 from sys import exc_info
 from typing import Optional, Callable, Tuple, TypeVar
 from time import time
@@ -24,11 +24,12 @@ from jinja2 import TemplateNotFound
 from jwt import encode as jwt_encode, decode as jwt_decode, ExpiredSignatureError
 from cerberus.validator import Validator
 from flask_shopify_utils.utils import get_version, GraphQLClient
-from flask_shopify_utils.models import Store
 
 __version__ = '0.0.1'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
+current_time_func = None
+sqlalchemy_instance = None
 
 
 class ShopifyUtil:
@@ -39,6 +40,7 @@ class ShopifyUtil:
             raise ValueError("`config` must be an instance of dict or None")
         self._config = config
         self._app = None
+        self._db = None
         if app is not None:
             self.init_app(app, config)
 
@@ -52,6 +54,10 @@ class ShopifyUtil:
             return current_app
         return self._app
 
+    @property
+    def db(self):
+        return self._db
+
     def init_app(self, app: Flask, config: dict = None) -> None:
         """ This is used to initialize your app object """
         if not (config is None or isinstance(config, dict)):
@@ -64,8 +70,8 @@ class ShopifyUtil:
         config = base_config
         default_tz = 'Pacific/Auckland'
 
-        config.setdefault('ROOT_PATH', os.getcwd())
-        config.setdefault('TEMPORARY_PATH', os.path.join(config.get('ROOT_PATH'), 'tmp'))
+        config.setdefault('ROOT_PATH', getcwd())
+        config.setdefault('TEMPORARY_PATH', path.join(config.get('ROOT_PATH'), 'tmp'))
         config.setdefault('API_VERSION', get_version())
         config.setdefault('RESTFUL_VERSION', get_version(restful=True))
         config.setdefault('TIMEZONE', default_tz)
@@ -76,14 +82,27 @@ class ShopifyUtil:
         config.setdefault('SCOPES', 'read_products')
 
         # Set environment variable
-        os.environ['TIMEZONE'] = config.get('TIMEZONE')
+        environ['TIMEZONE'] = config.get('TIMEZONE')
 
         if not hasattr(app, 'extensions'):
             app.extensions = {}
         app.extensions.setdefault('shopify_utils', self)
+
+        # Check SQLAlchemy is initialized
+        self._db = app.extensions.get('sqlalchemy', None)
+        if self._db is None:
+            raise Exception('Please initialize SQLAlchemy before using ShopifyUtils.')
+        global sqlalchemy_instance, current_time_func
+        # Initial the global data
+        sqlalchemy_instance = self.db if sqlalchemy_instance is None else sqlalchemy_instance
+        current_time_func = self.current_time if current_time_func is None else current_time_func
+
         # Set internal variables
         self._config = config
         self._app = app
+
+    def current_time(self):
+        return datetime.now(self.config.get('TIMEZONE'))
 
     def validate_hmac(self, params: dict) -> str:
         def calculate(params: dict):
@@ -118,7 +137,7 @@ class ShopifyUtil:
     def validate_jwt(self) -> Tuple[bool, JWT_DATA]:
         token = request.headers.get('Authorization', '')
         try:
-            res = jwt_decode(token, self.config.get('SHOPIFY_API_SECRET'), algorithms='HS256')
+            res = jwt_decode(token, self.config.get('SHOPIFY_API_SECRET', ''), algorithms='HS256')
         except ExpiredSignatureError:
             return False, jsonify(dict(status=401, message='Session token expired. Please refresh the page!'))
         except Exception as e:
@@ -388,34 +407,54 @@ class ShopifyUtil:
         """
         Register default Shopify routes
         """
+        from flask_shopify_utils.model import Store
 
+        static_folder = path.join(path.dirname(self.config.get('ROOT_PATH')), 'dist', 'front')
+        doc_routes = Blueprint(
+            'docs',
+            'docs_routes',
+            url_prefix='/docs',
+            static_folder=static_folder,
+            template_folder=static_folder
+        )
+
+        @doc_routes.route('/', methods=['GET'])
+        def docs_index() -> Response:
+            """
+            Show the docs for default message
+            """
+            try:
+                return make_response(render_template('index.html'))
+            except TemplateNotFound:
+                return make_response('Please contact "dev@pocketsquare.co.nz" for more information.')
+
+        static_folder = path.join(path.dirname(self.config.get('ROOT_PATH')), 'dist')
         default_routes = Blueprint(
             'shopify',
             'shopify_default_routes',
-            static_url_path='',
-            static_folder=os.path.join(os.path.dirname(self.config.get('ROOT_PATH')), 'dist')
+            static_folder=static_folder,
+            template_folder=static_folder
         )
 
         # Register the `admin` route
         @default_routes.route('/', methods=['GET'], endpoint='index')
         @self.check_hmac
-        def index():
+        def index() -> Response:
             """ Show Embedded App or Docs page """
             # check database
-            if self.app.extensions.get('sqlalchemy', False):
-                # Query the Store Record
-                store = Store.query.filter_by(key=g.store_key).first()
-                if not store:
-                    resp = self.proxy_response(404, '{} not found'.format(g.store_key))
-                    resp.status_code = 404
-                    return resp
-                g.store_id = store.id
-            else:
-                g.store_id = 1
+            store = Store.query.filter_by(key=g.store_key).first()
+            if not store:
+                msg = '{} not found in database! \n'.format(g.store_key)
+                msg += 'You can install the app via this URL: \n'
+                msg += url_for('shopify.install', shop=g.store_key, _external=True, _scheme='https')
+                resp = self.proxy_response(404, msg)
+                resp.status_code = 404
+                return resp
+            g.store_id = store.id
             # Render the Embedded App Index Page
             try:
                 code = render_template(
-                    os.path.join('admin', 'index.html'),
+                    path.join('admin', 'index.html'),
                     apiKey=self.config.get('SHOPIFY_API_KEY'),
                     host=g.host,
                     jwtToken=self.create_admin_jwt_token()
@@ -486,16 +525,89 @@ class ShopifyUtil:
             return resp
 
         # Register the Blueprint to routes
+        self.app.register_blueprint(doc_routes)
         self.app.register_blueprint(default_routes)
 
-    def enrol_docs_route(self):
-        pass
-
     def enrol_gdpr_route(self):
-        pass
+        gdpr_routes = Blueprint('shopify_gdpr', 'shopify_gdpr_routes')
+
+        # Register the webhook auth function before request
+        @gdpr_routes.before_request
+        def webhook_auth():
+            """
+            Check the webhook is valid or not
+            :return None or Response
+            """
+            if not self.validate_webhook():
+                resp = jsonify(dict(message='Hmac validation failed!', status=401))
+                resp.status_code = 401
+                return resp
+
+        @gdpr_routes.route('/webhook/shop/redact', methods=['POST'], endpoint='shop_redact')
+        def shop_redact():
+            """
+            You should erase the store information from your database
+            get the store key from g.store_key
+            """
+            data = request.get_json(silent=True)
+            print('shop_redact', data, g.store_key)
+            return 'success'
+
+        @gdpr_routes.route('/webhook/customers/redact', methods=['POST'], endpoint='customer_redact')
+        def customer_redact():
+            """
+            You should erase the customer information from your database
+            get the store key from g.store_key
+            """
+            data = request.get_json(silent=True)
+            print('customer_redact', data, g.store_key)
+            return 'success'
+
+        @gdpr_routes.route('/webhook/customers/data_request', methods=['POST'], endpoint='customer_data_request')
+        def customer_data():
+            """
+            If your app has been granted access to customers or orders, then you receive a data request webhook
+            with the resource IDs of the data that you need to provide to the store owner.
+            It's your responsibility to provide this data to the store owner directly.
+            In some cases, a customer record contains only the customer's email address.
+            get the store key from g.store_key
+            """
+            data = request.get_json(silent=True)
+            print('customer_data_request', data, g.store_key)
+            return 'success'
 
     def enrol_admin_route(self):
-        pass
+        from flask_shopify_utils.model import Store
+
+        admin_routes = Blueprint('admin', 'default_admin_routes', url_prefix='/admin')
+
+        @admin_routes.route('/test_jwt', methods=['GET'], endpoint='test_jwt')
+        @self.check_jwt
+        def test_jwt():
+            return self.admin_response()
+
+        @admin_routes.route('/check/<action>', methods=['GET'], endpoint='check_scopes')
+        @self.check_jwt
+        def check_scopes(action):
+            """ Check the granted scopes is update to date or not """
+            if action not in ['reinstall', 'status']:
+                return self.admin_response()
+            record = Store.query.filter_by(id=g.store_id).first()
+            if not record:
+                return self.admin_response(400, 'Store[{}] does not exist!'.format(g.store_id))
+            if action == 'reinstall':
+                return jsonify(data=url_for('shopify.install', shop=record.key, _external=True, _scheme='https'))
+            current_scopes = record.scopes.lower().split(',')
+            scopes = self.config.get('SCOPES').lower().split(',')
+            removes = [v for v in current_scopes if v not in scopes]
+            adds = [v for v in scopes if v not in current_scopes]
+            return self.admin_response(data=dict(
+                removes=removes,
+                adds=adds,
+                change=len(removes) != 0 or len(adds) != 0
+            ))
+
+        self.app.register_blueprint(admin_routes)
 
     def enrol_graphql_schema_cli(self):
         pass
