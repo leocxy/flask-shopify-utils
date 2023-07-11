@@ -56,6 +56,11 @@ Make sure you have install the repository locally.
 
 ```shell
 $ pip install -e .
+# run all tests
 $ pytest
+# run tests with output
+$ pytest -s
+# run specific test
+$ pytest -v tests/test_init.py
 ```
 

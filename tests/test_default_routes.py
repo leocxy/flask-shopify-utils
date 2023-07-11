@@ -10,19 +10,19 @@ from urllib.parse import urlencode
 from time import time
 
 
-def test_default_routes_enroll(app, shopify_utils):
-    shopify_utils.enrol_default_route()
+def test_default_routes_enroll(utils):
+    utils.enrol_default_route()
 
     rules = []
-    for val in app.url_map.iter_rules():
+    for val in utils.app.url_map.iter_rules():
         if val.rule in ['/', '/install', '/callback']:
             rules.append(val.rule)
     assert 3 == len(rules)
 
 
-def test_install_route(app, shopify_utils):
-    shopify_utils.enrol_default_route()
-    client = app.test_client()
+def test_install_route(utils):
+    utils.enrol_default_route()
+    client = utils.app.test_client()
     # Success
     params = dict(shop='test.myshopify.com')
     res = client.get(f'/install?{urlencode(params)}')
@@ -36,9 +36,9 @@ def test_install_route(app, shopify_utils):
     assert result.get('status') == 400
 
 
-def test_callback_route(app, shopify_utils):
-    shopify_utils.enrol_default_route()
-    client = app.test_client()
+def test_callback_route(utils):
+    utils.enrol_default_route()
+    client = utils.app.test_client()
     # Error - Cookie
     res = client.get('/callback')
     assert res.status_code == 200
@@ -82,7 +82,7 @@ def test_callback_route(app, shopify_utils):
     assert result.get('status') == 401
     assert result.get('message') == 'Hmac validation failed!'
     # Pass validation
-    params['hmac'] = shopify_utils.validate_hmac(params)
+    params['hmac'] = utils.validate_hmac(params)
     res = client.get('/callback?{}'.format(urlencode(params)))
     assert res.status_code == 500
     result = res.get_json()
@@ -90,9 +90,9 @@ def test_callback_route(app, shopify_utils):
     assert result.get('message') == 'Something went wrong while doing the OAuth!'
 
 
-def test_index_route(app, shopify_utils):
-    shopify_utils.enrol_default_route()
-    client = app.test_client()
+def test_index_route(utils):
+    utils.enrol_default_route()
+    client = utils.app.test_client()
     # Error - docs page error
     res = client.get('/')
     assert res.status_code == 200
@@ -119,10 +119,10 @@ def test_index_route(app, shopify_utils):
     assert result.get('message') == "Invalid HMAC"
     # pass
     del params['hmac']
-    params['hmac'] = shopify_utils.validate_hmac(params)
+    params['hmac'] = utils.validate_hmac(params)
     res = client.get('/?{}'.format(urlencode(params)))
-    # Success
-    assert res.status_code == 200
+    # Success -> no record in database
+    assert res.status_code == 404
     result = res.get_json()
-    assert result.get('status') == 0
-    assert result.get('message') == 'Oops... The `index.html` is gone!'
+    assert result.get('status') == 404
+

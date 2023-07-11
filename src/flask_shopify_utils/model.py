@@ -8,7 +8,7 @@
 """
 from flask_sqlalchemy import SQLAlchemy
 from json import loads
-from . import sqlalchemy_instance as db, current_time_func as current_time
+from . import current_time_func as current_time, sqlalchemy_instance as db
 
 if db is None or not isinstance(db, SQLAlchemy):
     raise RuntimeError('Please initialize the SQLAlchemy instance first.')

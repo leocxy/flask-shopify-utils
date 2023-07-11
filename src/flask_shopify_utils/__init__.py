@@ -56,7 +56,7 @@ class ShopifyUtil:
 
     @property
     def db(self):
-        return self._db
+        return self._db.session
 
     def init_app(self, app: Flask, config: dict = None) -> None:
         """ This is used to initialize your app object """
@@ -77,7 +77,7 @@ class ShopifyUtil:
         config.setdefault('TIMEZONE', default_tz)
         config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
         config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')
-        config.setdefault('BYPASS_VALIDATE', False)
+        config.setdefault('BYPASS_VALIDATE', 0)
         config.setdefault('DEBUG', False)
         config.setdefault('SCOPES', 'read_products')
 
@@ -94,7 +94,7 @@ class ShopifyUtil:
             raise Exception('Please initialize SQLAlchemy before using ShopifyUtils.')
         global sqlalchemy_instance, current_time_func
         # Initial the global data
-        sqlalchemy_instance = self.db if sqlalchemy_instance is None else sqlalchemy_instance
+        sqlalchemy_instance = self._db if sqlalchemy_instance is None else sqlalchemy_instance
         current_time_func = self.current_time if current_time_func is None else current_time_func
 
         # Set internal variables
@@ -145,6 +145,15 @@ class ShopifyUtil:
             print(exc_type, exc_obj, exc_tb)
             return False, jsonify(dict(status=500, message=e.__str__()))
         return True, res
+
+    def bypass_validate(self, func, args, kwargs):
+        bypass = self.config.get('BYPASS_VALIDATE', 0)
+        if bypass == 0:
+            return False, None
+        g.store_id = bypass
+        g.store_key = 'local-dev-bypass.myshopify.com'
+        g.jwt_expire_time = 0
+        return True, func(*args, **kwargs)
 
     def check_callback(self, func):
         """
@@ -264,7 +273,10 @@ class ShopifyUtil:
 
         @wraps(func)
         def decorator(*args, **kwargs):
-            # @todo add bypass validation
+            # bypass validation
+            bypass, resp = self.bypass_validate(func, args, kwargs)
+            if bypass:
+                return resp
             if not self.validate_proxy():
                 resp = jsonify(dict(
                     message='Proxy validation failed!',
@@ -274,8 +286,16 @@ class ShopifyUtil:
                 ))
                 resp.status_code = 401
                 return resp
+
             # grab `shop` from parameters
             g.store_key = request.args.get('shop', None)
+            from flask_shopify_utils.model import Store
+            store = Store.query.filter_by(store_key=g.store_key).first()
+            if store is None:
+                resp = self.proxy_response(401, 'Store[{}] does not exists!'.format(g.store_key))
+                resp.status_code = 401
+                return resp
+            g.store_id = store.id
             return func(*args, **kwargs)
 
         return decorator
@@ -303,6 +323,10 @@ class ShopifyUtil:
 
         @wraps(func)
         def decorator(*args, **kwargs):
+            # bypass validation
+            bypass, resp = self.bypass_validate(func, args, kwargs)
+            if bypass:
+                return resp
             if not self.validate_webhook():
                 resp = jsonify(dict(message='Hmac validation failed!', status=401))
                 resp.status_code = 401
@@ -336,7 +360,9 @@ class ShopifyUtil:
 
         @wraps(func)
         def decorator(*args, **kwargs):
-            # @todo add bypass validation
+            bypass, resp = self.bypass_validate(func, args, kwargs)
+            if bypass:
+                return resp
             rs, data = self.validate_jwt()
             if not rs:
                 return data
@@ -442,7 +468,7 @@ class ShopifyUtil:
         def index() -> Response:
             """ Show Embedded App or Docs page """
             # check database
-            store = Store.query.filter_by(key=g.store_key).first()
+            store = self.db.query(Store).filter_by(key=g.store_key).first()
             if not store:
                 msg = '{} not found in database! \n'.format(g.store_key)
                 msg += 'You can install the app via this URL: \n'
@@ -542,6 +568,7 @@ class ShopifyUtil:
                 resp = jsonify(dict(message='Hmac validation failed!', status=401))
                 resp.status_code = 401
                 return resp
+            g.store_key = request.headers.get('X-Shopify-Shop-Domain', None)
 
         @gdpr_routes.route('/webhook/shop/redact', methods=['POST'], endpoint='shop_redact')
         def shop_redact():
@@ -575,6 +602,8 @@ class ShopifyUtil:
             data = request.get_json(silent=True)
             print('customer_data_request', data, g.store_key)
             return 'success'
+
+        self.app.register_blueprint(gdpr_routes)
 
     def enrol_admin_route(self):
         from flask_shopify_utils.model import Store
