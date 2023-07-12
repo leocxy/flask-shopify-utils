@@ -12,7 +12,7 @@ from json import dumps
 
 
 def test_gdpr_routes_enroll(utils):
-    utils.enrol_gdpr_route()
+    utils.enroll_gdpr_route()
 
     rules = []
     for val in utils.app.url_map.iter_rules():
@@ -22,7 +22,7 @@ def test_gdpr_routes_enroll(utils):
 
 
 def test_redact_routes(utils):
-    utils.enrol_gdpr_route()
+    utils.enroll_gdpr_route()
     client = utils.app.test_client()
     for url in ['/webhook/shop/redact', '/webhook/customers/redact', '/webhook/customers/data_request']:
         # Error

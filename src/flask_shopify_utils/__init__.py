@@ -429,7 +429,7 @@ class ShopifyUtil:
             return False, func(status=status, message=message, data=validator.errors)
         return True, None
 
-    def enrol_default_route(self) -> None:
+    def enroll_default_route(self) -> None:
         """
         Register default Shopify routes
         """
@@ -468,15 +468,19 @@ class ShopifyUtil:
         def index() -> Response:
             """ Show Embedded App or Docs page """
             # check database
-            store = self.db.query(Store).filter_by(key=g.store_key).first()
-            if not store:
-                msg = '{} not found in database! \n'.format(g.store_key)
-                msg += 'You can install the app via this URL: \n'
-                msg += url_for('shopify.install', shop=g.store_key, _external=True, _scheme='https')
-                resp = self.proxy_response(404, msg)
-                resp.status_code = 404
-                return resp
-            g.store_id = store.id
+            bypass = self.config.get('BYPASS_VALIDATE', 0)
+            if bypass != 0:
+                g.store_id = bypass
+            else:
+                store = self.db.query(Store).filter_by(key=g.store_key).first()
+                if not store:
+                    msg = '{} not found in database! \n'.format(g.store_key)
+                    msg += 'You can install the app via this URL: \n'
+                    msg += url_for('shopify.install', shop=g.store_key, _external=True, _scheme='https')
+                    resp = self.proxy_response(404, msg)
+                    resp.status_code = 404
+                    return resp
+                g.store_id = store.id
             # Render the Embedded App Index Page
             try:
                 code = render_template(
@@ -554,7 +558,7 @@ class ShopifyUtil:
         self.app.register_blueprint(doc_routes)
         self.app.register_blueprint(default_routes)
 
-    def enrol_gdpr_route(self):
+    def enroll_gdpr_route(self):
         gdpr_routes = Blueprint('shopify_gdpr', 'shopify_gdpr_routes')
 
         # Register the webhook auth function before request
@@ -605,7 +609,7 @@ class ShopifyUtil:
 
         self.app.register_blueprint(gdpr_routes)
 
-    def enrol_admin_route(self):
+    def enroll_admin_route(self):
         from flask_shopify_utils.model import Store
 
         admin_routes = Blueprint('admin', 'default_admin_routes', url_prefix='/admin')

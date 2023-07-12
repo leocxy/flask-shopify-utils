@@ -11,7 +11,7 @@ from time import time
 
 
 def test_default_routes_enroll(utils):
-    utils.enrol_default_route()
+    utils.enroll_default_route()
 
     rules = []
     for val in utils.app.url_map.iter_rules():
@@ -21,7 +21,7 @@ def test_default_routes_enroll(utils):
 
 
 def test_install_route(utils):
-    utils.enrol_default_route()
+    utils.enroll_default_route()
     client = utils.app.test_client()
     # Success
     params = dict(shop='test.myshopify.com')
@@ -37,7 +37,7 @@ def test_install_route(utils):
 
 
 def test_callback_route(utils):
-    utils.enrol_default_route()
+    utils.enroll_default_route()
     client = utils.app.test_client()
     # Error - Cookie
     res = client.get('/callback')
@@ -91,7 +91,7 @@ def test_callback_route(utils):
 
 
 def test_index_route(utils):
-    utils.enrol_default_route()
+    utils.enroll_default_route()
     client = utils.app.test_client()
     # Error - docs page error
     res = client.get('/')
@@ -125,4 +125,10 @@ def test_index_route(utils):
     assert res.status_code == 404
     result = res.get_json()
     assert result.get('status') == 404
+    utils.config['BYPASS_VALIDATE'] = 1
+    res = client.get('/?{}'.format(urlencode(params)))
+    assert res.status_code == 200
+    result = res.get_json()
+    assert 0 == result.get('status')
+    assert 'Oops... The `index.html` is gone!' == result.get('message')
 
