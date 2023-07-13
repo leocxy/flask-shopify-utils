@@ -6,8 +6,6 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 12/07/23 2:11 pm
 """
-from urllib.parse import urlencode
-from time import time
 
 
 def test_admin_routes_enroll(utils):
@@ -33,4 +31,3 @@ def test_check_jwt_route(utils):
     result = res.get_json()
     assert 0 == result.get('status')
     assert 'success' == result.get('message')
-

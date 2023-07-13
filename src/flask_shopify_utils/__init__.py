@@ -643,4 +643,52 @@ class ShopifyUtil:
         self.app.register_blueprint(admin_routes)
 
     def enrol_graphql_schema_cli(self):
-        pass
+        from os import remove, getcwd, path
+        from json import dump
+        from click import option, echo, ClickException
+        from sgqlc.endpoint.http import HTTPEndpoint
+        from sgqlc.introspection import query, variables
+        from sgqlc.codegen import get_arg_parse
+        from flask_shopify_utils.utils import get_version
+        from flask_shopify_utils.model import Store
+
+        cli_bp = Blueprint('graphql_cli', 'graphql_cli', cli_group=None)
+
+        @cli_bp.cli.command('generate_schema')
+        @option('-s', '--store_id', default=1, help='Store ID')
+        @option('-v', '--version', default=None, help='Schema version: 20xx-01 or 20xx-04 ...')
+        @option('-d', '--with-deprecated', default=True, help='Include deprecated fields, default is True')
+        def generate_schema(store_id, version, with_deprecated):
+            """ Generate Shopify GraphQL schema """
+            version = get_version(version)
+            try:
+                store = self.db.query(Store).filter_by(id=store_id).first()
+                if not store:
+                    raise ClickException('Store[{}} does not exists!'.format(store_id))
+            except Exception as e:
+                raise ClickException('Can`t fetch Store data from database!')
+            url = 'https://{}/admin/api/{}/graphql'.format(store.key, version)
+            endpoint = HTTPEndpoint(url, {'X-Shopify-Access-Token': store.token})
+            data = endpoint(query, variables(
+                include_description=False,
+                include_deprecated=with_deprecated,
+            ))
+            json_file = 'schema.json'
+            with open(json_file, 'w') as f:
+                dump(data, f, indent=4, sort_keys=True, default=str)
+            # check file path
+            target_path = path.join(getcwd(), 'app', 'schema')
+            if not path.exists(target_path):
+                target_path = 'schema.py'
+            else:
+                target_path = path.join(target_path, 'schema.py')
+            ap = get_arg_parse()
+            args = ap.parse_args(['schema', json_file, target_path])
+            args.func(args)
+            # remove the json file
+            remove(json_file)
+            msg = 'GraphQL Schema for "{}" has been generated! \n'.format(version)
+            msg += 'Please check the file: {}'.format(target_path)
+            echo(msg)
+
+        self.app.register_blueprint(cli_bp)
