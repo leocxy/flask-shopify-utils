@@ -12,7 +12,6 @@ from time import sleep
 from sgqlc.operation import Operation
 from sgqlc.endpoint.http import HTTPEndpoint
 from urllib.error import HTTPError, URLError
-from contextlib import contextmanager
 
 
 def get_version(version: str = None, restful: bool = False) -> str:
