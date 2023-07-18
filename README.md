@@ -50,6 +50,14 @@ $ python -m pip install --upgrade pip setuptools
 $ pip install -r requirements.txt && pip install -e .
 ```
 
+## Generate the requirements.txt
+
+Once you customize the `steup.cfg`, you should update the `requirements.txt`. 
+
+```shell
+>pip-compile --output-file=requirements.txt
+````
+
 ## Running the tests
 
 Make sure you have install the repository locally.
