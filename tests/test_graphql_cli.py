@@ -9,7 +9,7 @@
 
 
 def test_graphql_cli(utils):
-    utils.enrol_graphql_schema_cli()
+    utils.enroll_graphql_schema_cli()
     runner = utils.app.test_cli_runner()
     result = runner.invoke(args='generate_schema')
     assert result.exit_code == 1

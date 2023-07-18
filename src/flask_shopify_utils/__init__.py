@@ -11,7 +11,7 @@ from sys import exc_info
 from typing import Optional, Callable, Tuple, TypeVar
 from time import time
 from hashlib import sha256
-from functools import wraps
+from functools import wraps, partial
 from hmac import new as hmac_new, compare_digest
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -409,6 +409,23 @@ class ShopifyUtil:
         data = [] if data is None else data
         return jsonify(status=status, message=message, data=data)
 
+    def paginate_response(self, paginate, is_admin: bool = True):
+        from_num = 1 if paginate.page == 1 else (paginate.page - 1) * paginate.per_page + 1
+        to_num = paginate.per_page if paginate.page == 1 else paginate.page * paginate.per_page
+        data = {
+            'total': paginate.total,
+            'per_page': paginate.per_page,
+            'current_page': paginate.page,
+            'last_page': paginate.pages,
+            'next_page_url': '',
+            'prev_page_url': '',
+            'from': from_num,
+            'to': to_num,
+            'data': list(map(lambda x: x.to_dict(), paginate.items))
+        }
+        func = self.admin_response if is_admin else self.proxy_response
+        return func(data=data)
+
     def form_validate(self, data: dict = None, schema: dict = None, is_admin: bool = False):
         func = getattr(self, 'proxy_response' if not is_admin else 'admin_response')
         if not data or not schema:
@@ -428,6 +445,104 @@ class ShopifyUtil:
             message = first_error
             return False, func(status=status, message=message, data=validator.errors)
         return True, None
+
+    def prevent_concurrency(self, key: str = 'main'):
+        """
+        Prevent concurrency request
+        :param key:
+        :return:
+        """
+        from os import getpid, remove
+        from psutil import pid_exists, Process
+        file_path = path.join(self.config.get('ROOT_PATH'), 'tmp', 'worker-{}.lock'.format(key))
+        try:
+            if path.isfile(file_path):
+                with open(file_path, 'r') as f:
+                    pid = f.read()
+                    if pid_exists(pid):
+                        proc = Process(pid)
+                        run_time = int(datetime.now().timestamp()) - int(proc.create_time())
+                        if proc.status() == 'zombie' or run_time >= (3600 * 6):
+                            proc.kill()
+                        else:
+                            raise RuntimeError('{}[{}] is running'.format(key, pid))
+            with open(file_path, 'w+') as f:
+                f.write(str(getpid()))
+            yield
+            remove(file_path)
+        except RuntimeError as e:
+            raise e
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = exc_info()
+            print(exc_type, exc_obj, exc_tb)
+            raise e
+
+    @classmethod
+    def get_hash_time_format(cls, val: str):
+        types = dict(monthly='%Y%m%d%H%M%SM', daily='%Y%m%d%H%M%SD', hourly='%Y%m%d%H%M%SH')
+        return types.get(val, '%Y%m%d%H%M%SH')
+
+    def generate_internal_hash(self, value, expired_time: str = 'daily') -> str:
+        """
+        Generate internal hash for proxy APIs or something internal use
+        :param value:
+        :param expired_time: daily, hourly, monthly
+        :return:
+        """
+        value = str(value)
+        time_format = self.get_hash_time_format(expired_time)
+        dynamic_value = datetime.now(self.config.get('TIMEZONE')).strftime(time_format)
+        return hmac_new(
+            self.config.get('SHOPIFY_API_SECRET').encode('utf-8'),
+            '{}{}'.format(value, dynamic_value).encode('utf-8'),
+            sha256
+        ).hexdigest() + dynamic_value
+
+    def validate_internal_hash(self, func=None, key_name: str = 'customer_id', expired_time: str = 'daily'):
+        if func is None:
+            return partial(self.validate_internal_hash, key_name=key_name, expired_time=expired_time)
+
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            token = request.args.get('hash', None)
+            if not token:
+                for header_name in ['Custom-Token', 'Authorization']:
+                    token = request.headers.get(header_name, None)
+                    if token:
+                        break
+            if not token:
+                resp = self.proxy_response(401, '`Custom-Token` is missing from Header')
+                return resp
+            value = str(kwargs.get(key_name, ''))
+            dynamic_value = token[-15:]
+            signature1 = token[:-15]
+            signature2 = hmac_new(
+                self.config.get('SHOPIFY_API_SECRET').encode('utf-8'),
+                '{}{}'.format(value, dynamic_value).encode('utf-8'),
+                sha256
+            ).hexdigest()
+            if not compare_digest(signature1, signature2):
+                return self.proxy_response(401, 'Invalid `Custom-Token`')
+            # check the expired time
+            time_format = self.get_hash_time_format(expired_time)
+            expired_type = time_format[-1:]
+            timezone = self.config.get('TIMEZONE')
+            created_time = datetime.strptime(dynamic_value[:-1], time_format[:-1]).replace(tzinfo=timezone)
+            current_time = datetime.now(timezone)
+            duration = current_time - created_time
+            # M, D, H
+            if expired_type == 'M':
+                if 0 < duration.days <= 30:
+                    return func(*args, **kwargs)
+            if expired_type == 'D':
+                if 0 < duration.total_seconds() <= 86400:
+                    return func(*args, **kwargs)
+            if expired_type == 'H':
+                if 0 < duration.total_seconds() < 3600:
+                    return func(*args, **kwargs)
+            return self.proxy_response(401, '`Custom-Token` is expired!')
+
+        return decorator
 
     def enroll_default_route(self) -> None:
         """
@@ -642,7 +757,7 @@ class ShopifyUtil:
 
         self.app.register_blueprint(admin_routes)
 
-    def enrol_graphql_schema_cli(self):
+    def enroll_graphql_schema_cli(self):
         from os import remove, getcwd, path
         from json import dump
         from click import option, echo, ClickException

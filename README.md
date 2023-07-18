@@ -47,7 +47,7 @@ $ python -m pip install --upgrade pip setuptools
 - Install the development dependencies, then install `Flask-ShopifyUtils` in editable mode.
 
 ```sheel
-$ pip install -r requirements/dev.txt && pip install -e .
+$ pip install -r requirements.txt && pip install -e .
 ```
 
 ## Running the tests

@@ -12,11 +12,12 @@ from time import sleep
 from sgqlc.operation import Operation
 from sgqlc.endpoint.http import HTTPEndpoint
 from urllib.error import HTTPError, URLError
-from shopify import ApiVersion
+from contextlib import contextmanager
 
 
 def get_version(version: str = None, restful: bool = False) -> str:
     """ Get Shopify API Version """
+    from shopify import ApiVersion
     # Get Latest version of GraphQL
     today = datetime.today()
     month = int(today.strftime('%-m'))
@@ -82,3 +83,27 @@ class GraphQLClient:
             attempts -= 1
             return self.fetch_data(query, timeout, attempts)
 
+
+def patch_shopify_with_limits() -> None:
+    """
+    Patch Shopify API with limits thresholds
+    :return:
+    """
+    from shopify.base import ShopifyConnection
+    from pyactiveresource.connection import ClientError
+    func = ShopifyConnection._open
+
+    def patched_open(self, *args, **kwargs):
+        while True:
+            try:
+                return func(self, *args, **kwargs)
+            except ClientError as e:
+                if e.response.code == 429:
+                    retry_after = float(e.response.headers.get('Retry-After', 4))
+                    print('Service exceeds Shopify API call limit, '
+                          'will retry to send request in %s seconds' % retry_after)
+                    sleep(retry_after)
+                else:
+                    raise e
+
+    ShopifyConnection._open = patched_open
