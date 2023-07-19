@@ -231,7 +231,7 @@ class ShopifyUtil:
             params = request.args
             if len([x for x in params.keys() if x in ['session', 'hmac', 'host', 'timestamp']]) != 4:
                 # Redirect to the Docs page
-                return redirect(url_for('docs.index'))
+                return redirect(url_for('docs_default.index'))
             # Check Hmac
             if not compare_digest(
                     self.validate_hmac(params),
@@ -588,7 +588,7 @@ class ShopifyUtil:
                 if not store:
                     msg = '{} not found in database! \n'.format(g.store_key)
                     msg += 'You can install the app via this URL: \n'
-                    msg += url_for('shopify.install', shop=g.store_key, _external=True, _scheme='https')
+                    msg += url_for('shopify_default.install', shop=g.store_key, _external=True, _scheme='https')
                     resp = self.proxy_response(404, msg)
                     resp.status_code = 404
                     return resp
@@ -657,7 +657,7 @@ class ShopifyUtil:
             # Redirect back to the Store Admin Panel for OAuth
             state = uuid4().hex
             params = dict(
-                redirect_uri=url_for('shopify.callback', _scheme='https', _external=True),
+                redirect_uri=url_for('shopify_default.callback', _scheme='https', _external=True),
                 client_id=self.config.get('SHOPIFY_API_KEY'),
                 scope=self.config.get('SCOPES'),
                 state=state
@@ -741,7 +741,7 @@ class ShopifyUtil:
             if not record:
                 return self.admin_response(400, 'Store[{}] does not exist!'.format(g.store_id))
             if action == 'reinstall':
-                return jsonify(data=url_for('shopify.install', shop=record.key, _external=True, _scheme='https'))
+                return jsonify(data=url_for('shopify_default.install', shop=record.key, _external=True, _scheme='https'))
             current_scopes = record.scopes.lower().split(',')
             scopes = self.config.get('SCOPES').lower().split(',')
             removes = [v for v in current_scopes if v not in scopes]

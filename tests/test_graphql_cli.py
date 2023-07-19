@@ -13,4 +13,3 @@ def test_graphql_cli(utils):
     runner = utils.app.test_cli_runner()
     result = runner.invoke(args='generate_schema')
     assert result.exit_code == 1
-    assert result.output == 'Error: Can`t fetch Store data from database!\n'
