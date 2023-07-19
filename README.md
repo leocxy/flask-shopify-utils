@@ -73,6 +73,15 @@ $ python -m pip install --upgrade pip setuptools
 $ pip install -r requirements.txt && pip install -e .
 ```
 
+- Build the wheel
+```shell
+# deprecated
+>python setup.py bdist_wheel
+# new 
+>python -m build
+# For more reference https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html
+```
+
 ## Generate the requirements.txt
 
 Once you customize the `steup.cfg`, you should update the `requirements.txt`. 
