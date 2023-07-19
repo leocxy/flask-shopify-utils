@@ -26,7 +26,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -741,7 +741,8 @@ class ShopifyUtil:
             if not record:
                 return self.admin_response(400, 'Store[{}] does not exist!'.format(g.store_id))
             if action == 'reinstall':
-                return jsonify(data=url_for('shopify_default.install', shop=record.key, _external=True, _scheme='https'))
+                return jsonify(
+                    data=url_for('shopify_default.install', shop=record.key, _external=True, _scheme='https'))
             current_scopes = record.scopes.lower().split(',')
             scopes = self.config.get('SCOPES').lower().split(',')
             removes = [v for v in current_scopes if v not in scopes]

@@ -12,6 +12,29 @@ $pip install -U flask-shopify-utils
 
 ---
 
+## Example / How to ...
+
+Please check the `example` folder for more details.
+
+Remember, this package is using Flask-SQLAlchemy, so you need to initialize the database first.
+
+```python
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_shopify_utils import ShopifyUtil
+
+app = Flask(__name__)
+# Init Database
+db = SQLAlchemy()
+db.init_app(app)
+
+# Initial Shopify Utils
+utils = ShopifyUtil()
+utils.init_app(app)
+```
+
+---
+
 ## Donate
 
 Well, I have no idea how this work, just copy it from somewhere.
