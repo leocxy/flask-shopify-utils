@@ -75,6 +75,7 @@ $ pip install -r requirements.txt && pip install -e .
 
 - Build the wheel
 ```shell
+>pip install wheel setuptools twine build
 # deprecated
 >python setup.py bdist_wheel
 # new 
@@ -95,7 +96,10 @@ Once you customize the `steup.cfg`, you should update the `requirements.txt`.
 Make sure you have install the repository locally.
 
 ```shell
+# install the package
 $ pip install -e .
+# install the pytest
+& pip install pytest
 # run all tests
 $ pytest
 # run tests with output
