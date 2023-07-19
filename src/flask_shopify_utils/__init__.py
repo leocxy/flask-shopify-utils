@@ -23,6 +23,7 @@ from flask import Flask, request, g, jsonify, Response, current_app, Blueprint, 
 from jinja2 import TemplateNotFound
 from jwt import encode as jwt_encode, decode as jwt_decode, ExpiredSignatureError
 from cerberus.validator import Validator
+from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
 __version__ = '0.0.1'
@@ -67,22 +68,18 @@ class ShopifyUtil:
             base_config.update(self.config)
         if config:
             base_config.update(config)
-        config = base_config
-        default_tz = 'Pacific/Auckland'
 
+        config = base_config
         config.setdefault('ROOT_PATH', getcwd())
         config.setdefault('TEMPORARY_PATH', path.join(config.get('ROOT_PATH'), 'tmp'))
         config.setdefault('API_VERSION', get_version())
         config.setdefault('RESTFUL_VERSION', get_version(restful=True))
-        config.setdefault('TIMEZONE', default_tz)
+        config.setdefault('TIMEZONE', timezone('Pacific/Auckland'))
         config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
         config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')
         config.setdefault('BYPASS_VALIDATE', 0)
         config.setdefault('DEBUG', False)
-        config.setdefault('SCOPES', 'read_products')
-
-        # Set environment variable
-        environ['TIMEZONE'] = config.get('TIMEZONE')
+        config.setdefault('SCOPES', environ.get('SCOPES', 'read_products'))
 
         if not hasattr(app, 'extensions'):
             app.extensions = {}
@@ -526,9 +523,9 @@ class ShopifyUtil:
             # check the expired time
             time_format = self.get_hash_time_format(expired_time)
             expired_type = time_format[-1:]
-            timezone = self.config.get('TIMEZONE')
-            created_time = datetime.strptime(dynamic_value[:-1], time_format[:-1]).replace(tzinfo=timezone)
-            current_time = datetime.now(timezone)
+            tz = self.config.get('TIMEZONE')
+            created_time = datetime.strptime(dynamic_value[:-1], time_format[:-1]).replace(tzinfo=tz)
+            current_time = datetime.now(tz)
             duration = current_time - created_time
             # M, D, H
             if expired_type == 'M':
@@ -552,7 +549,7 @@ class ShopifyUtil:
 
         static_folder = path.join(path.dirname(self.config.get('ROOT_PATH')), 'dist', 'front')
         doc_routes = Blueprint(
-            'docs',
+            'docs_default',
             'docs_routes',
             url_prefix='/docs',
             static_folder=static_folder,
@@ -571,7 +568,7 @@ class ShopifyUtil:
 
         static_folder = path.join(path.dirname(self.config.get('ROOT_PATH')), 'dist')
         default_routes = Blueprint(
-            'shopify',
+            'shopify_default',
             'shopify_default_routes',
             static_folder=static_folder,
             template_folder=static_folder
@@ -727,7 +724,7 @@ class ShopifyUtil:
     def enroll_admin_route(self):
         from flask_shopify_utils.model import Store
 
-        admin_routes = Blueprint('admin', 'default_admin_routes', url_prefix='/admin')
+        admin_routes = Blueprint('admin_default', 'default_admin_routes', url_prefix='/admin')
 
         @admin_routes.route('/test_jwt', methods=['GET'], endpoint='test_jwt')
         @self.check_jwt
@@ -781,6 +778,7 @@ class ShopifyUtil:
                 if not store:
                     raise ClickException('Store[{}} does not exists!'.format(store_id))
             except Exception as e:
+                print(e)
                 raise ClickException('Can`t fetch Store data from database!')
             url = 'https://{}/admin/api/{}/graphql'.format(store.key, version)
             endpoint = HTTPEndpoint(url, {'X-Shopify-Access-Token': store.token})
@@ -792,11 +790,12 @@ class ShopifyUtil:
             with open(json_file, 'w') as f:
                 dump(data, f, indent=4, sort_keys=True, default=str)
             # check file path
-            target_path = path.join(getcwd(), 'app', 'schema')
+            target_path = path.join(getcwd(), 'app', 'schemas')
+            filename = 'shopify.py'
             if not path.exists(target_path):
-                target_path = 'schema.py'
+                target_path = filename
             else:
-                target_path = path.join(target_path, 'schema.py')
+                target_path = path.join(target_path, filename)
             ap = get_arg_parse()
             args = ap.parse_args(['schema', json_file, target_path])
             args.func(args)
