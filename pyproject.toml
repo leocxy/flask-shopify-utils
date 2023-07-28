@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flask-shopify-utils"
+description = "A Flask extension for Shopify app development"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["Flask", "Extension", "Flask Extension", "Shopify", "Shopify-SDK", "SDK"]
+authors = [
+    {email = "leo.cxy88@gmail.com"},
+    {name = "Leo Chen"}
+]
+maintainers = [
+    {email = "leo.cxy88@gmail.com"},
+    {name = "Leo Chen"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: Flask"
+]
+dependencies = [
+    "Flask < 3",
+    "Flask-SQLAlchemy == 3.0.5",
+    "ShopifyAPI == 12.3.0",
+    "sgqlc < 17",
+    "psutil == 5.9.5",
+    "pytz == 2023.3",
+    "requests < 3",
+    "Cerberus == 1.3.4",
+    "PyJWT == 2.8.0"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest == 7.4.0"
+]
+
+[tool.hatch.version]
+path = "src/flask_shopify_utils/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/leocxy/flask-shopify-utils"
+"Bug Tracker" = "https://github.com/leocxy/flask-shopify-utils/issues"

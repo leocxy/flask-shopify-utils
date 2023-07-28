@@ -31,6 +31,10 @@ db.init_app(app)
 # Initial Shopify Utils
 utils = ShopifyUtil()
 utils.init_app(app)
+
+# example: register default routes
+utils.enroll_default_route()
+
 ```
 
 ---
@@ -61,34 +65,46 @@ $ py -3 -m venv env
 $ env/Scripts/active
 ```
 
-- Upgrade `pip` and `setuptools`
+- Install `pip-tools`, `twine` and `build` in the virtualenv. 
 
 ```shell
-$ python -m pip install --upgrade pip setuptools
+>pip install --upgrade pip
+>pip install pip-tools twine build
 ```
 
 - Install the development dependencies, then install `Flask-ShopifyUtils` in editable mode.
 
 ```sheel
-$ pip install -r requirements.txt && pip install -e .
+$ pip install -r requirements/dev.txt && pip install -e .
 ```
 
 - Build the wheel
 ```shell
->pip install wheel setuptools twine build
-# deprecated
->python setup.py bdist_wheel
 # new 
 >python -m build
 # For more reference https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html
 ```
 
-## Generate the requirements.txt
-
-Once you customize the `steup.cfg`, you should update the `requirements.txt`. 
+- Deploy to PyPI
 
 ```shell
->pip-compile --output-file=requirements.txt
+# check
+>twine check dist/*
+# upload
+>twine upload dist/*
+```
+
+## requirements.txt
+
+All dependencies are managed by `pip-tools`, so you need to install it first.
+And you can find them from the `requirements` folder.
+
+```shell
+# development
+>pip-compile --extra=dev --output-file=requirements/dev.txt pyproject.toml
+
+# production
+>pip-compile --output-file=requirements/index.txt pyproject.toml
 ````
 
 ## Running the tests
@@ -97,14 +113,18 @@ Make sure you have install the repository locally.
 
 ```shell
 # install the package
-$ pip install -e .
+>pip install -e .
 # install the pytest
-& pip install pytest
+>pip install pytest
 # run all tests
-$ pytest
+>pytest
 # run tests with output
-$ pytest -s
+>pytest -s
 # run specific test
-$ pytest -v tests/test_init.py
+>pytest -v tests/test_init.py
 ```
 
+---
+
+# Reference
+[Packing for Python](https://packaging.python.org/en/latest/tutorials/installing-packages/)

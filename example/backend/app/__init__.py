@@ -16,7 +16,7 @@ from flask_shopify_utils import ShopifyUtil
 __version__ = '0.2.0'
 __author__ = 'Leo Chen'
 __email__ = 'leo.cxy88@gmail.com'
-__copyright__ = 'Copyright 2021, Pocket Square'
+__copyright__ = 'Copyright 2023'
 # Global Setting
 app = None
 db = None

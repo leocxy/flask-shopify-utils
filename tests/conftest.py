@@ -24,4 +24,3 @@ def utils():
         from flask_shopify_utils.model import Store, Webhook
         db.create_all()
         yield utils
-
