@@ -26,7 +26,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -223,15 +223,17 @@ class ShopifyUtil:
 
         @wraps(func)
         def decorator(*args, **kwargs):
-            # check timestamp
-            timestamp1 = int(request.args.get('timestamp', '0'))
-            timestamp2 = int(time()) - 86400
-            if timestamp1 < timestamp2:
-                return jsonify(dict(message='The request has expired', status=401))
             params = request.args
             if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) < 4:
                 # Redirect to the Docs page
                 return redirect(url_for('docs_default.index'))
+            # Check timestamp
+            timestamp1 = int(request.args.get('timestamp', '0'))
+            timestamp2 = int(time()) - 86400
+            if timestamp1 < timestamp2:
+                resp = self.proxy_response(401, 'The request has expired')
+                resp.status_code = 401
+                return resp
             # Check Hmac
             if not compare_digest(
                     self.validate_hmac(params),
@@ -556,7 +558,7 @@ class ShopifyUtil:
             template_folder=static_folder,
         )
 
-        @doc_routes.route('/', methods=['GET'])
+        @doc_routes.route('', methods=['GET'])
         def index() -> Response:
             """
             Show the docs for default message
@@ -574,11 +576,9 @@ class ShopifyUtil:
             template_folder=static_folder,
         )
 
-        # Register the `admin` route
-        @default_routes.route('/', methods=['GET'], endpoint='index')
+        @default_routes.route('/admin', methods=['GET'], endpoint='admin')
         @self.check_hmac
-        def index() -> Response:
-            """ Show Embedded App or Docs page """
+        def admin() -> Response:
             # check database
             bypass = self.config.get('BYPASS_VALIDATE', 0)
             if bypass != 0:
@@ -604,6 +604,16 @@ class ShopifyUtil:
             except TemplateNotFound:
                 return self.proxy_response(0, 'Oops... The `index.html` is gone!')
             return make_response(code)
+
+        # Index Route -> redirect to Docs or Admin
+        @default_routes.route('/', methods=['GET'], endpoint='index')
+        def index() -> Response:
+            """ Show Embedded App or Docs page """
+            params = request.args
+            if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) < 4:
+                # Redirect to the Docs page
+                return redirect(url_for('docs_default.index'))
+            return redirect(url_for('shopify_default.admin'))
 
         # Register the `callback` route
         @default_routes.route('/callback', methods=['GET'], endpoint='callback')
@@ -741,7 +751,8 @@ class ShopifyUtil:
             if not record:
                 return self.admin_response(400, 'Store[{}] does not exist!'.format(g.store_id))
             if action == 'reinstall':
-                return self.admin_response(data=url_for('shopify_default.install', shop=record.key, _external=True, _scheme='https'))
+                return self.admin_response(
+                    data=url_for('shopify_default.install', shop=record.key, _external=True, _scheme='https'))
             current_scopes = record.scopes.lower().split(',')
             scopes = self.config.get('SCOPES').lower().split(',')
             removes = [v for v in current_scopes if v not in scopes]

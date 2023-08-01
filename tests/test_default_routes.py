@@ -15,9 +15,9 @@ def test_default_routes_enroll(utils):
 
     rules = []
     for val in utils.app.url_map.iter_rules():
-        if val.rule in ['/', '/install', '/callback']:
+        if val.rule in ['/', '/install', '/callback', '/admin']:
             rules.append(val.rule)
-    assert 3 == len(rules)
+    assert 4 == len(rules)
 
 
 def test_install_route(utils):
@@ -93,10 +93,30 @@ def test_callback_route(utils):
 def test_index_route(utils):
     utils.enroll_default_route()
     client = utils.app.test_client()
-    # Error - docs page error
+    # none parameters -> docs page
     res = client.get('/')
-    assert res.status_code == 200
-    # Error - timestamp expired
+    assert res.status_code == 302
+    assert res.headers.get('Location', '') == '/docs'
+    params = dict(
+        timestamp=int(time()),
+        host='host_token_for_app_bridge',
+        shop='test.myshopify.com',
+        session='shopify_session_token',
+        hmac='test'
+    )
+    res = client.get('/?{}'.format(urlencode(params)))
+    assert res.status_code == 302
+    assert res.headers.get('Location', '') == '/admin'
+
+
+def test_admin_index_route(utils):
+    utils.enroll_default_route()
+    client = utils.app.test_client()
+    # none parameters -> docs page
+    res = client.get('/admin')
+    assert res.status_code == 302
+    assert res.headers.get('Location', '') == '/docs'
+    # Error - Invalid Timestamp
     timestamp = int(time()) - 86400 - 1
     params = dict(
         timestamp=timestamp,
@@ -105,30 +125,29 @@ def test_index_route(utils):
         session='shopify_session_token',
         hmac='test'
     )
-    res = client.get('/?{}'.format(urlencode(params)))
-    assert res.status_code == 200
+    res = client.get('/admin?{}'.format(urlencode(params)))
+    assert res.status_code == 401
     result = res.get_json()
     assert result.get('status') == 401
     assert result.get('message') == "The request has expired"
     # Error - Invalid Hmac
     params['timestamp'] = int(time())
-    res = client.get('/?{}'.format(urlencode(params)))
+    res = client.get('/admin?{}'.format(urlencode(params)))
     assert res.status_code == 401
     result = res.get_json()
     assert result.get('status') == 401
     assert result.get('message') == "Invalid HMAC"
-    # pass
+    # Error - No Database Record
     del params['hmac']
     params['hmac'] = utils.validate_hmac(params)
-    res = client.get('/?{}'.format(urlencode(params)))
-    # Success -> no record in database
-    assert res.status_code == 404
+    res = client.get('/admin?{}'.format(urlencode(params)))
     result = res.get_json()
     assert result.get('status') == 404
+    assert 'not found in database!' in result.get('message')
+    # Bypass - pass
     utils.config['BYPASS_VALIDATE'] = 1
-    res = client.get('/?{}'.format(urlencode(params)))
+    res = client.get('/admin?{}'.format(urlencode(params)))
     assert res.status_code == 200
     result = res.get_json()
     assert 0 == result.get('status')
     assert 'Oops... The `index.html` is gone!' == result.get('message')
-
