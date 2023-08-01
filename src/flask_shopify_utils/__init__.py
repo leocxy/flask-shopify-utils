@@ -26,7 +26,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -229,7 +229,7 @@ class ShopifyUtil:
             if timestamp1 < timestamp2:
                 return jsonify(dict(message='The request has expired', status=401))
             params = request.args
-            if len([x for x in params.keys() if x in ['session', 'hmac', 'host', 'timestamp']]) != 4:
+            if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) >= 4:
                 # Redirect to the Docs page
                 return redirect(url_for('docs_default.index'))
             # Check Hmac
@@ -557,7 +557,7 @@ class ShopifyUtil:
         )
 
         @doc_routes.route('/', methods=['GET'])
-        def docs_index() -> Response:
+        def index() -> Response:
             """
             Show the docs for default message
             """
