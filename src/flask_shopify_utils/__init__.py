@@ -26,7 +26,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -547,13 +547,13 @@ class ShopifyUtil:
         """
         from flask_shopify_utils.model import Store
 
-        static_folder = path.join(path.dirname(self.config.get('ROOT_PATH')), 'dist', 'front')
+        static_folder = path.join(self.config.get('ROOT_PATH'), 'dist', 'docs')
         doc_routes = Blueprint(
             'docs_default',
             'docs_routes',
             url_prefix='/docs',
             static_folder=static_folder,
-            template_folder=static_folder
+            template_folder=static_folder,
         )
 
         @doc_routes.route('/', methods=['GET'])
@@ -566,12 +566,12 @@ class ShopifyUtil:
             except TemplateNotFound:
                 return make_response('Please contact "dev@pocketsquare.co.nz" for more information.')
 
-        static_folder = path.join(path.dirname(self.config.get('ROOT_PATH')), 'dist')
+        static_folder = path.join(self.config.get('ROOT_PATH'), 'dist', 'admin')
         default_routes = Blueprint(
             'shopify_default',
             'shopify_default_routes',
             static_folder=static_folder,
-            template_folder=static_folder
+            template_folder=static_folder,
         )
 
         # Register the `admin` route
@@ -596,7 +596,7 @@ class ShopifyUtil:
             # Render the Embedded App Index Page
             try:
                 code = render_template(
-                    path.join('admin', 'index.html'),
+                    'index.html',
                     apiKey=self.config.get('SHOPIFY_API_KEY'),
                     host=g.host,
                     jwtToken=self.create_admin_jwt_token()
