@@ -9,6 +9,7 @@
 from hmac import new as hmac_new
 from hashlib import sha256
 from json import dumps
+from base64 import b64encode
 
 
 def test_gdpr_routes_enroll(utils):
@@ -34,8 +35,8 @@ def test_redact_routes(utils):
                           'sage') == 'Hmac validation failed!'
         # Success
         data = dumps(dict(a=1, b=2, c='abcde'))
-        secret = utils.config.get('SHOPIFY_API_SECRET', '')
-        signature = hmac_new(secret.encode('utf-8'), data.encode('utf-8'), sha256).hexdigest()
+        secret = utils.config.get('SHOPIFY_API_SECRET', 'SHOPIFY_API_SECRET')
+        signature = b64encode(hmac_new(secret.encode('utf-8'), data.encode('utf-8'), sha256).digest()).decode('utf-8')
         res = client.post(url, data=data, headers={'X-Shopify-Hmac-Sha256': signature})
         assert res.status_code == 200
         result = res.get_data()

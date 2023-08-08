@@ -27,7 +27,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.12'
+__version__ = '0.0.13'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -292,7 +292,7 @@ class ShopifyUtil:
             # grab `shop` from parameters
             g.store_key = request.args.get('shop', None)
             from flask_shopify_utils.model import Store
-            store = Store.query.filter_by(store_key=g.store_key).first()
+            store = Store.query.filter_by(key=g.store_key).first()
             if store is None:
                 resp = self.proxy_response(401, 'Store[{}] does not exists!'.format(g.store_key))
                 resp.status_code = 401
