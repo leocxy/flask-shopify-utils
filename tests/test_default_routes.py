@@ -106,7 +106,7 @@ def test_index_route(utils):
     )
     res = client.get('/?{}'.format(urlencode(params)))
     assert res.status_code == 302
-    assert res.headers.get('Location', '') == '/admin'
+    assert '/admin?' in res.headers.get('Location', '')
 
 
 def test_admin_index_route(utils):

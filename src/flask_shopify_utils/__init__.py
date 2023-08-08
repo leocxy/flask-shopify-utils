@@ -26,7 +26,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -71,7 +71,8 @@ class ShopifyUtil:
 
         config = base_config
         config.setdefault('ROOT_PATH', getcwd())
-        config.setdefault('TEMPORARY_PATH', path.join(config.get('ROOT_PATH'), 'tmp'))
+        config.setdefault('BACKEND_PATH', path.join(config.get('ROOT_PATH'), 'backend'))
+        config.setdefault('TEMPORARY_PATH', path.join(config.get('BACKEND_PATH'), 'tmp'))
         config.setdefault('API_VERSION', get_version())
         config.setdefault('RESTFUL_VERSION', get_version(restful=True))
         config.setdefault('TIMEZONE', timezone('Pacific/Auckland'))
@@ -453,7 +454,7 @@ class ShopifyUtil:
         """
         from os import getpid, remove
         from psutil import pid_exists, Process
-        file_path = path.join(self.config.get('ROOT_PATH'), 'tmp', 'worker-{}.lock'.format(key))
+        file_path = path.join(self.config.get('BACKEND_PATH'), 'tmp', 'worker-{}.lock'.format(key))
         try:
             if path.isfile(file_path):
                 with open(file_path, 'r') as f:
@@ -613,7 +614,7 @@ class ShopifyUtil:
             if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) < 4:
                 # Redirect to the Docs page
                 return redirect(url_for('docs_default.index'))
-            return redirect(url_for('shopify_default.admin'))
+            return redirect(url_for('shopify_default.admin', **params))
 
         # Register the `callback` route
         @default_routes.route('/callback', methods=['GET'], endpoint='callback')
@@ -736,10 +737,39 @@ class ShopifyUtil:
 
         admin_routes = Blueprint('admin_default', 'default_admin_routes', url_prefix='/admin')
 
-        @admin_routes.route('/test_jwt', methods=['GET'], endpoint='test_jwt')
+        @admin_routes.route('/test_jwt', methods=['POST', 'GET'], endpoint='test_jwt')
         @self.check_jwt
         def test_jwt():
-            return self.admin_response()
+            if request.method == 'GET':
+                return self.admin_response()
+            data = request.get_json(silent=True)
+            rs, resp = self.form_validate(data, dict(
+                data=dict(type='dict', required=True, allow_unknown=True, schema=dict(
+                    hmac=dict(type='string', required=True),
+                    host=dict(type='string', required=True),
+                    shop=dict(type='string', required=True),
+                    timestamp=dict(type='string', required=True),
+                ))), False)
+            if not rs:
+                return resp
+            # check database
+            bypass = self.config.get('BYPASS_VALIDATE', 0)
+            if bypass != 0:
+                g.store_id = bypass
+            else:
+                store = self.db.query(Store).filter_by(key=g.store_key).first()
+                if not store:
+                    msg = '{} not found in database! \n'.format(g.store_key)
+                    msg += 'You can install the app via this URL: \n'
+                    msg += url_for('shopify_default.install', shop=g.store_key, _external=True, _scheme='https')
+                    resp = self.proxy_response(404, msg)
+                    resp.status_code = 404
+                    return resp
+                g.store_id = store.id
+            return self.admin_response(data=dict(
+                apiKey=self.config.get('SHOPIFY_API_KEY'),
+                jwtToken=self.create_admin_jwt_token()
+            ))
 
         @admin_routes.route('/check/<action>', methods=['GET'], endpoint='check_scopes')
         @self.check_jwt
