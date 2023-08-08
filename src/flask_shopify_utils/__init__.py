@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from requests import post as post_request
 from urllib.parse import urlencode
+from base64 import b64encode
 # Third-party Library
 from flask import Flask, request, g, jsonify, Response, current_app, Blueprint, redirect, render_template, \
     make_response, url_for
@@ -26,7 +27,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.11'
+__version__ = '0.0.12'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -129,8 +130,9 @@ class ShopifyUtil:
     def validate_webhook(self) -> bool:
         signature = request.headers.get('X-Shopify-Hmac-Sha256', '')
         data = request.get_data()
-        secret = self.config.get('SHOPIFY_API_SECRET') if self.config else 'SHOPIFY_API_SECRET'
-        return compare_digest(signature, hmac_new(secret.encode('utf-8'), data, sha256).hexdigest())
+        secret = self.config.get('SHOPIFY_API_SECRET', 'SHOPIFY_API_SECRET')
+        value = b64encode(hmac_new(secret.encode('utf-8'), data, sha256).digest())
+        return compare_digest(signature.encode('utf-8'), value)
 
     def validate_jwt(self) -> Tuple[bool, JWT_DATA]:
         token = request.headers.get('Authorization', '')
