@@ -26,7 +26,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -135,7 +135,7 @@ class ShopifyUtil:
     def validate_jwt(self) -> Tuple[bool, JWT_DATA]:
         token = request.headers.get('Authorization', '')
         try:
-            res = jwt_decode(token, self.config.get('SHOPIFY_API_SECRET', ''), algorithms='HS256')
+            res = jwt_decode(token[7:], self.config.get('SHOPIFY_API_SECRET', ''), algorithms='HS256')
         except ExpiredSignatureError:
             return False, jsonify(dict(status=401, message='Session token expired. Please refresh the page!'))
         except Exception as e:
