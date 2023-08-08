@@ -27,7 +27,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.13'
+__version__ = '0.0.14'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -493,7 +493,7 @@ class ShopifyUtil:
         """
         value = str(value)
         time_format = self.get_hash_time_format(expired_time)
-        dynamic_value = datetime.now(self.config.get('TIMEZONE')).strftime(time_format)
+        dynamic_value = datetime.utcnow().strftime(time_format)
         return hmac_new(
             self.config.get('SHOPIFY_API_SECRET').encode('utf-8'),
             '{}{}'.format(value, dynamic_value).encode('utf-8'),
@@ -528,9 +528,8 @@ class ShopifyUtil:
             # check the expired time
             time_format = self.get_hash_time_format(expired_time)
             expired_type = time_format[-1:]
-            tz = self.config.get('TIMEZONE')
-            created_time = datetime.strptime(dynamic_value[:-1], time_format[:-1]).replace(tzinfo=tz)
-            current_time = datetime.now(tz)
+            created_time = datetime.strptime(dynamic_value[:-1], time_format[:-1])
+            current_time = datetime.utcnow()
             duration = current_time - created_time
             # M, D, H
             if expired_type == 'M':
