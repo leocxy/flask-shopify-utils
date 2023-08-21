@@ -128,3 +128,6 @@ Make sure you have install the repository locally.
 
 # Reference
 [Packing for Python](https://packaging.python.org/en/latest/tutorials/installing-packages/)
+
+# TODO
+Add test for `ShopifyUtil` methods
