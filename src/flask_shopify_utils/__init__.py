@@ -18,6 +18,7 @@ from uuid import uuid4
 from requests import post as post_request
 from urllib.parse import urlencode
 from base64 import b64encode
+from contextlib import contextmanager
 # Third-party Library
 from flask import Flask, request, g, jsonify, Response, current_app, Blueprint, redirect, render_template, \
     make_response, url_for
@@ -27,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.14'
+__version__ = '0.0.15'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -448,6 +449,7 @@ class ShopifyUtil:
             return False, func(status=status, message=message, data=validator.errors)
         return True, None
 
+    @contextmanager
     def prevent_concurrency(self, key: str = 'main'):
         """
         Prevent concurrency request
