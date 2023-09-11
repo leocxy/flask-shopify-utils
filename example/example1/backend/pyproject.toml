@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "CustomAppExample1"
+version = "0.2.0"
+readme = "README.md"
+description = "Shopify Custom app"
+requires-python = ">=3.8"
+keywords = ["Flask", "Shopify"]
+authors = [
+    {email = "leo.cxy88@gmail.com"},
+    {name = "Leo Chen"}
+]
+maintainers = [
+    {email = "leo.cxy88@gmail.com"},
+    {name = "Leo Chen"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: Flask"
+]
+dependencies = [
+    "flask-shopify-utils == 0.0.16",
+    "Flask-Migrate < 5",
+    "python-dotenv == 1.0.0",
+    "prettytable < 4",
+    "pymysql < 2",
+    "python-dateutil < 3"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest == 7.4.0"
+]

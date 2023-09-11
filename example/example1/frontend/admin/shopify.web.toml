@@ -1,0 +1,8 @@
+roles = ["frontend"]
+port = 8080
+
+auth_callback_path = ["/proxy/callback", '/callback']
+webhooks_path = "/proxy/webhook"
+
+[commands]
+dev = "yarn dev"

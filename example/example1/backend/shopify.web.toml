@@ -1,0 +1,5 @@
+roles = ["backend"]
+port = 5000
+
+[commands]
+dev = '.venv/bin/flask run'

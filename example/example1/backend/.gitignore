@@ -1,0 +1,15 @@
+# IDE
+.idea/
+
+# virtualenv
+.venv
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Database
+*.db
+
+# script flag
+*.flag

@@ -1,0 +1,14 @@
+# Node
+node_modules
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+
+# static files
+dist
+
+# .env variables
+.env
