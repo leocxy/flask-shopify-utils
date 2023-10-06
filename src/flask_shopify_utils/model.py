@@ -7,7 +7,7 @@
 # @Date    : 6/06/23 4:02 pm
 """
 from flask_sqlalchemy import SQLAlchemy
-from json import loads
+from simplejson import loads, dumps
 from . import current_time_func as current_time, sqlalchemy_instance as db
 
 if db is None or not isinstance(db, SQLAlchemy):
@@ -59,6 +59,7 @@ class Store(db.Model, BasicMethod):
     def set_extra(self, data: dict) -> None:
         extra = self.get_extra()
         extra.update(data)
+        self.extra = dumps(extra)
 
 
 class Webhook(db.Model, BasicMethod):
@@ -77,6 +78,12 @@ class Webhook(db.Model, BasicMethod):
     status = db.Column(db.SmallInteger, default=0)
     created_at = db.Column(db.DateTime, default=current_time)
     updated_at = db.Column(db.DateTime, default=current_time, onupdate=current_time)
+
+    def get_data(self) -> dict:
+        return {} if not self.data else loads(self.data)
+
+    def set_data(self, data: dict) -> None:
+        self.data = dumps(data)
 
 
 __all__ = (Store, Webhook, BasicMethod)
