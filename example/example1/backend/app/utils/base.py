@@ -10,10 +10,9 @@ from os import environ, path
 from logging import Formatter, Logger
 from logging.handlers import RotatingFileHandler
 # Request validation
-from json import dumps
-import shopify
+from simplejson import dumps
 from sgqlc.operation import Operation
-from flask_shopify_utils.utils import GraphQLClient, patch_shopify_with_limits, get_version
+from flask_shopify_utils.utils import GraphQLClient
 from flask_shopify_utils.model import Store
 # custom modules
 from app import app
@@ -28,6 +27,7 @@ class BasicHelper:
         # Shopify API
         self._gql = None
         self._api = None
+        self._api_request = None
         # Logger
         self.logger = Logger('BasicHelper')
         handler = RotatingFileHandler(
@@ -38,9 +38,9 @@ class BasicHelper:
         handler.setFormatter(Formatter('[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'))
         if environ.get('FLASK_DEBUG', '1') == '1':
             level = 'DEBUG'
-        else:
-            level = 'DEBUG'
             self.logger.addHandler(app.logger.handlers[0])
+        else:
+            level = 'INFO'
         handler.setLevel(level)
         self.logger.addHandler(handler)
 
@@ -56,12 +56,30 @@ class BasicHelper:
 
     @property
     def api(self):
+        # Shopify Official
+        import shopify
+        from flask_shopify_utils.utils import patch_shopify_with_limits, get_version
         if not self._api:
             api_session = shopify.Session(self.store.key, get_version(restful=True), self.store.token)
             patch_shopify_with_limits()
             shopify.ShopifyResource.activate_session(api_session)
             self._api = shopify
         return self._api
+
+    @property
+    def api_request(self):
+        """
+        Using requests to send request to Shopify endpoint
+        With a better retry strategy and easy to implement to concurrent
+        """
+        # Using requests
+        from requests import Session
+        from flask_shopify_utils.utils import initial_restful_adapter
+        if not self._api_request:
+            self._api_request = Session()
+            self._api_request.headers.update({'X-Shopify-Access-Token': self.store.token})
+            self._api_request.mount('https://', initial_restful_adapter())
+        return self._api_request
 
     def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json'):
         op = Operation(shopify_schema.mutation_type, 'UpdateCodeMeta')

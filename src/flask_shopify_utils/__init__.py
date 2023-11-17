@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.18'
+__version__ = '0.0.19'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None

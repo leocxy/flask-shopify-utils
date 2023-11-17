@@ -1,12 +1,10 @@
 import {defineStore} from "pinia"
-import {createApp} from "@shopify/app-bridge"
-import {ResourcePicker, Redirect} from "@shopify/app-bridge/actions"
 import isString from "lodash/isString"
 import isUndefined from "lodash/isUndefined"
 
 export const useDefault = defineStore("default", {
     state: () => ({
-        app_bridge: null,
+        app_bridge: window?.shopify || null,
         success_toast: {
             active: false,
             content: 'Success',
@@ -24,98 +22,42 @@ export const useDefault = defineStore("default", {
         ],
     }),
     actions: {
-        setAppBridge(token, host) {
-            this.app_bridge = createApp({
-                apiKey: token,
-                host: host,
-            })
+
+        checkAppBridge() {
+            if (this.app_bridge === null) {
+                this.error_toast.content = 'App bridge is not available'
+                this.error_toast.active = true
+                return false
+            }
+            return true
         },
-        redirectAdmin(payload) {
-            if (this.app_bridge === null) return false
-            const redirect = Redirect.create(this.app_bridge);
-            return redirect.dispatch(Redirect.Action.ADMIN_PATH, payload)
+        redirectAdmin(resource, target = '_top') {
+            if (!this.checkAppBridge()) return
+            open(`shopify://admin/${resource}`, target)
         },
-        redirectRemote(payload) {
-            if (this.app_bridge === null) return false
-            const redirect = Redirect.create(this.app_bridge);
-            return redirect.dispatch(Redirect.Action.REMOTE, {
-                url: payload?.url || payload,
-                newContext: payload?.newContext === undefined ? true : payload.newContext
-            })
+        redirectRemote(url, target = '_blank') {
+            if (!this.checkAppBridge()) return
+            open(url, target)
         },
         productPicker(payload) {
-            if (this.app_bridge === null) return false
-            const picker = ResourcePicker.create(this.app_bridge, {
-                    options: {
-                        showVariants: payload['showVariants'] || false,
-                        selectMultiple: payload['selectMultiple'] || false,
-                        initialSelectionIds: payload['initialSelectionIds'] || []
-                    },
-                    resourceType: ResourcePicker.ResourceType.Product
-                }),
-                cancel_cb = (payload && payload['cancel_cb'] && typeof payload['cancel_cb'] === 'function') ? payload['cancel_cb'] : () => {
-                    picker.unsubscribe()
-                },
-                select_cb = (payload && payload['select_cb'] && typeof payload['select_cb'] === 'function') ? ({selection}) => {
-                    payload['select_cb'](selection), picker.unsubscribe()
-                } : () => {
-                    picker.unsubscribe()
-                };
-            // selection callback
-            picker.subscribe(ResourcePicker.Action.SELECT, select_cb);
-            // cancel callback
-            picker.subscribe(ResourcePicker.Action.CANCEL, cancel_cb);
-            // dispatch picker
-            picker.dispatch(ResourcePicker.Action.OPEN)
+            if (!this.checkAppBridge()) return
+            payload = isUndefined(payload) ? {} : payload
+            return this.app_bridge.resourcePicker({type: 'product', ...payload})
         },
         variantPicker(payload) {
-            if (this.app_bridge === null) return false
-            const picker = ResourcePicker.create(this.app_bridge, {
-                    options: {
-                        selectMultiple: payload['selectMultiple'] || false,
-                        initialSelectionIds: payload['initialSelectionIds'] || []
-                    },
-                    resourceType: ResourcePicker.ResourceType.ProductVariant
-                }),
-                cancel_cb = (payload && payload['cancel_cb'] && typeof payload['cancel_cb'] === 'function') ? payload['cancel_cb'] : () => {
-                    picker.unsubscribe()
-                },
-                select_cb = (payload && payload['select_cb'] && typeof payload['select_cb'] === 'function') ? ({selection}) => {
-                    payload['select_cb'](selection), picker.unsubscribe()
-                } : () => {
-                    picker.unsubscribe()
-                };
-            // selection callback
-            picker.subscribe(ResourcePicker.Action.SELECT, select_cb);
-            // cancel callback
-            picker.subscribe(ResourcePicker.Action.CANCEL, cancel_cb);
-            // dispatch picker
-            picker.dispatch(ResourcePicker.Action.OPEN)
+            if (!this.checkAppBridge()) return
+            payload = isUndefined(payload) ? {} : payload
+            return this.app_bridge.resourcePicker({type: 'variant', ...payload})
         },
         collectionPicker(payload) {
-            if (this.app_bridge === null) return false
-            const picker = ResourcePicker.create(this.app_bridge, {
-                    options: {showVariants: false, selectMultiple: payload['selectMultiple'] || false},
-                    resourceType: ResourcePicker.ResourceType.Collection
-                }),
-                cancel_cb = (payload && payload['cancel_cb'] && typeof payload['cancel_cb'] === 'function') ? payload['cancel_cb'] : () => {
-                    picker.unsubscribe()
-                },
-                select_cb = (payload && payload['select_cb'] && typeof payload['select_cb'] === 'function') ? ({selection}) => {
-                    payload['select_cb'](selection), picker.unsubscribe()
-                } : () => {
-                    picker.unsubscribe()
-                };
-            // selection callback
-            picker.subscribe(ResourcePicker.Action.SELECT, select_cb);
-            // cancel callback
-            picker.subscribe(ResourcePicker.Action.CANCEL, cancel_cb);
-            // dispatch picker
-            picker.dispatch(ResourcePicker.Action.OPEN)
+            if (!this.checkAppBridge()) return
+            payload = isUndefined(payload) ? {} : payload
+            return this.app_bridge.resourcePicker({type: 'collection', ...payload})
         },
         errorCallback(err, isSaving) {
             console.error(err)
             if (isSaving) setTimeout(() => isSaving.value = false, 1000)
+            err = err?.data || err
             this.error_toast.active = true
             this.error_toast.content = err?.message ? err.message : 'Oops... Something went wrong'
         }

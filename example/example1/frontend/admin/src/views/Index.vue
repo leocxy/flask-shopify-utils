@@ -6,8 +6,7 @@
                 <template #footerContent>
                     <p>
                         If you don't want to add a transfer, you can import your inventory from
-                        <Link monochrome url="/settings"> settings</Link>
-                        .
+                        <Link monochrome url="/settings"> settings</Link>.
                     </p>
                 </template>
             </EmptyState>
@@ -17,21 +16,19 @@
 
 <script setup>
 import {ref, onMounted, inject} from 'vue'
-import {storeToRefs} from "pinia"
 import {useDefault} from "../stores/index"
 
 const $http = inject('$http')
-const store = useDefault()
+const {errorCallback, getApi, success_toast} = useDefault()
 const isSaving = ref(false)
-const {success_toast} = storeToRefs(store)
 
 
 onMounted(() => {
     isSaving.value = true
-    $http.get(store.getApi('test_jwt')).then(() => {
+    $http.get(getApi('test_jwt')).then(() => {
         isSaving.value = false
-        success_toast.active = true
         success_toast.content = 'This should never work!'
-    }).catch(store.errorCallback)
+        success_toast.active = true
+    }).catch(err => errorCallback(err, isSaving))
 })
 </script>

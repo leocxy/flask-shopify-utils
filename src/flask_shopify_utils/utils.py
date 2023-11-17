@@ -12,6 +12,8 @@ from time import sleep
 from sgqlc.operation import Operation
 from sgqlc.endpoint.http import HTTPEndpoint
 from urllib.error import HTTPError, URLError
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 
 
 def get_version(version: str = None, restful: bool = False) -> str:
@@ -106,3 +108,17 @@ def patch_shopify_with_limits() -> None:
                     raise e
 
     ShopifyConnection._open = patched_open
+
+
+def initial_restful_adapter() -> HTTPAdapter:
+    """
+    Initial RestfulAPI Adapter
+    Usually used for Shopify RestfulAPI
+    Have a better retry for concurrency requests
+    """
+    Retry.parse_retry_after = lambda self, retry_after: float(retry_after)
+    return HTTPAdapter(max_retries=Retry(
+        total=5,
+        status_forcelist=[429],
+        respect_retry_after_header=True
+    ))

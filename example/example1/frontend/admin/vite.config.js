@@ -25,8 +25,11 @@ if (host === "localhost") {
     };
 }
 
+
 // https://vitejs.dev/config/
 export default defineConfig({
+    envDir: '../../',
+    envPrefix: 'SHOPIFY_API_KEY',
     plugins: [
         vue(),
     ],
@@ -54,6 +57,7 @@ export default defineConfig({
     },
     base: process.env.npm_lifecycle_event.includes('build') ? '/admin' : '/',
     build: {
-        outDir: '../../dist/admin'
+        outDir: '../../dist/admin',
+        emptyOutDir: true,
     }
 })
