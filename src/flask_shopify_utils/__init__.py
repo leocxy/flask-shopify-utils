@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.19'
+__version__ = '0.0.20'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -462,8 +462,8 @@ class ShopifyUtil:
         try:
             if path.isfile(file_path):
                 with open(file_path, 'r') as f:
-                    pid = f.read()
-                    if pid_exists(int(pid)):
+                    pid = int(f.read())
+                    if pid_exists(pid):
                         proc = Process(pid)
                         run_time = int(datetime.now().timestamp()) - int(proc.create_time())
                         if proc.status() == 'zombie' or run_time >= (3600 * 6):
@@ -474,6 +474,14 @@ class ShopifyUtil:
                 f.write(str(getpid()))
             yield
             remove(file_path)
+        except TypeError as e:
+            exc_type, exc_obj, exc_tb = exc_info()
+            print(exc_type, exc_obj, exc_tb)
+            raise e
+        except ValueError as e:
+            exc_type, exc_obj, exc_tb = exc_info()
+            print(exc_type, exc_obj, exc_tb)
+            raise e
         except RuntimeError as e:
             raise e
         except Exception as e:

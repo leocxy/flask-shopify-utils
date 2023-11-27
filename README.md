@@ -131,4 +131,3 @@ Make sure you have install the repository locally.
 
 # TODO
 Add test for `ShopifyUtil` methods
-Add model override example to exmaple1
