@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.0.20'
+__version__ = '0.1.1'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -609,8 +609,6 @@ class ShopifyUtil:
             try:
                 code = render_template(
                     'index.html',
-                    apiKey=self.config.get('SHOPIFY_API_KEY'),
-                    host=g.host,
                     jwtToken=self.create_admin_jwt_token()
                 )
             except TemplateNotFound:

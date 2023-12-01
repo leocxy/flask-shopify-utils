@@ -11,6 +11,8 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(PolarisVue)
+// You can use sweetalert2 directly in vue3
+
 // global properties -> https://stackoverflow.com/questions/63100658/add-global-variable-in-vue-js-3
 // initial the Axios
 Axios.interceptors.response.use(function (response) {
