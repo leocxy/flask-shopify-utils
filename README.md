@@ -121,7 +121,9 @@ Make sure you have install the repository locally.
 # run tests with output
 >pytest -s
 # run specific test
->pytest -v tests/test_init.py
+>pytest -vs tests/test_init.py
+# run specific test case
+>pytest -vs tests/test_init.py::test_init_app
 ```
 
 ---

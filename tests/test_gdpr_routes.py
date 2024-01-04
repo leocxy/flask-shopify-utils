@@ -12,32 +12,29 @@ from json import dumps
 from base64 import b64encode
 
 
-def test_gdpr_routes_enroll(utils):
-    utils.enroll_gdpr_route()
-
+def test_gdpr_routes_enroll(initial_test_client):
+    client, test, utils = initial_test_client
     rules = []
     for val in utils.app.url_map.iter_rules():
         if val.rule in ['/webhook/shop/redact', '/webhook/customers/redact', '/webhook/customers/data_request']:
             rules.append(val.rule)
-    assert 3 == len(rules)
+    test.assertEqual(3, len(rules))
 
 
-def test_redact_routes(utils):
-    utils.enroll_gdpr_route()
-    client = utils.app.test_client()
+def test_redact_routes(initial_test_client):
+    client, test, utils = initial_test_client
     for url in ['/webhook/shop/redact', '/webhook/customers/redact', '/webhook/customers/data_request']:
         # Error
         res = client.post(url)
-        assert res.status_code == 401
+        test.assertEqual(401, res.status_code)
         result = res.get_json()
-        assert result.get('status') == 401
-        assert result.get('mes'
-                          'sage') == 'Hmac validation failed!'
+        test.assertDictEqual(dict(status=401, message='Hmac validation failed!'), result)
         # Success
         data = dumps(dict(a=1, b=2, c='abcde'))
         secret = utils.config.get('SHOPIFY_API_SECRET', 'SHOPIFY_API_SECRET')
         signature = b64encode(hmac_new(secret.encode('utf-8'), data.encode('utf-8'), sha256).digest()).decode('utf-8')
         res = client.post(url, data=data, headers={'X-Shopify-Hmac-Sha256': signature})
-        assert res.status_code == 200
+        test.assertEqual(200, res.status_code)
         result = res.get_data()
-        assert str(result, encoding='utf-8') == 'success'
+        test.assertEqual(b'success', result)
+

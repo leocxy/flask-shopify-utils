@@ -8,8 +8,8 @@
 """
 
 
-def test_graphql_cli(utils):
-    utils.enroll_graphql_schema_cli()
+def test_graphql_cli(initial_test_client) -> None:
+    client, test, utils = initial_test_client
     runner = utils.app.test_cli_runner()
     result = runner.invoke(args='generate_schema')
-    assert result.exit_code == 1
+    test.assertEqual(result.exit_code, 1)
