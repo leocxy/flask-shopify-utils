@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# @Project : app-wild-poppies
+# @Project : flask-shopify-utils
 # @File    : wsgi.py
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 11/09/23 9:24 am

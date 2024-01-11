@@ -6,7 +6,7 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 6/10/23 4:22 pm
 """
-from os import environ, path
+from os import path
 from logging import Formatter, Logger
 from logging.handlers import RotatingFileHandler
 # Request validation
@@ -36,7 +36,7 @@ class BasicHelper:
             backupCount=5
         )
         handler.setFormatter(Formatter('[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'))
-        if environ.get('FLASK_DEBUG', '1') == '1':
+        if app.config.get('FLASK_DEBUG', '1') == '1':
             level = 'DEBUG'
             self.logger.addHandler(app.logger.handlers[0])
         else:

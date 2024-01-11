@@ -9,7 +9,7 @@ For any extra dependencies, please add them to `pyproject.toml` and run `pip-com
 
 ### Environment
 
-- OS: MacOX / Centos
+- OS: MacOX / Linux 
 - Python: ^3.8
 
 ---
@@ -65,5 +65,8 @@ All python dependencies are managed by pip-tools. You can use the following comm
 >pytest
 
 # Run a specific unit test
->pytest -s -v tests/test_app.py
+>pytest -vs tests/test_app.py
+
+# Run a specific unit test case
+>pytest -vs test/test_app.py:test_case
 ```

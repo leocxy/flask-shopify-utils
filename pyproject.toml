@@ -43,6 +43,12 @@ dev = [
     "pytest == 7.4.2"
 ]
 
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = '-vs'
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
 [tool.hatch.version]
 path = "src/flask_shopify_utils/__init__.py"
 
