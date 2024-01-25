@@ -27,7 +27,7 @@ classifiers = [
 dependencies = [
     "Flask < 4",
     "Flask-SQLAlchemy < 4",
-    "ShopifyAPI == 12.3.0",
+    "ShopifyAPI == 12.4.0",
     "sgqlc < 17",
     "psutil == 5.9.5",
     "pytz == 2023.3",

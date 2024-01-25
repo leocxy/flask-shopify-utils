@@ -16,7 +16,7 @@ click==8.1.7
     # via flask
 exceptiongroup==1.2.0
     # via pytest
-flask==3.0.0
+flask==3.0.1
     # via
     #   flask-shopify-utils (pyproject.toml)
     #   flask-sqlalchemy
@@ -24,25 +24,25 @@ flask-sqlalchemy==3.1.1
     # via flask-shopify-utils (pyproject.toml)
 graphql-core==3.2.3
     # via sgqlc
-greenlet==3.0.1
+greenlet==3.0.3
     # via sqlalchemy
 idna==3.6
     # via requests
-importlib-metadata==6.8.0
+importlib-metadata==7.0.1
     # via flask
 iniconfig==2.0.0
     # via pytest
 itsdangerous==2.1.2
     # via flask
-jinja2==3.1.2
+jinja2==3.1.3
     # via flask
-markupsafe==2.1.3
+markupsafe==2.1.4
     # via
     #   jinja2
     #   werkzeug
 packaging==23.2
     # via pytest
-pluggy==1.3.0
+pluggy==1.4.0
     # via pytest
 psutil==5.9.5
     # via flask-shopify-utils (pyproject.toml)
@@ -62,7 +62,7 @@ requests==2.31.0
     # via flask-shopify-utils (pyproject.toml)
 sgqlc==16.3
     # via flask-shopify-utils (pyproject.toml)
-shopifyapi==12.3.0
+shopifyapi==12.4.0
     # via flask-shopify-utils (pyproject.toml)
 simplejson==3.19.2
     # via flask-shopify-utils (pyproject.toml)
@@ -70,11 +70,11 @@ six==1.16.0
     # via
     #   pyactiveresource
     #   shopifyapi
-sqlalchemy==2.0.23
+sqlalchemy==2.0.25
     # via flask-sqlalchemy
 tomli==2.0.1
     # via pytest
-typing-extensions==4.8.0
+typing-extensions==4.9.0
     # via sqlalchemy
 urllib3==2.1.0
     # via requests
