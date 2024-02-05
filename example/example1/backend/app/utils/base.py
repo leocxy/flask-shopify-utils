@@ -9,6 +9,7 @@
 from os import path
 from logging import Formatter, Logger
 from logging.handlers import RotatingFileHandler
+from functools import wraps
 # Request validation
 from simplejson import dumps
 from sgqlc.operation import Operation
@@ -98,3 +99,20 @@ class BasicHelper:
             self.logger.error('UpdateMetaError: %s', msg)
             return False, res['userErrors']
         return True, res['metafields'][0]['id'].split('/')[-1]
+
+    @staticmethod
+    def debug(func):
+        """
+        debug decorator
+        Capture the input and output of the function
+        """
+
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            args[0].logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:]))
+            result = func(*args, **kwargs)
+            args[0].logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
+            return result
+
+        return decorator
+
