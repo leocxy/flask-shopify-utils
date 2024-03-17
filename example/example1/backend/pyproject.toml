@@ -26,7 +26,7 @@ classifiers = [
     "Framework :: Flask"
 ]
 dependencies = [
-    "flask-shopify-utils == 0.1.1",
+    "flask-shopify-utils == 0.1.2",
     "Flask-Migrate < 5",
     "python-dotenv == 1.0.0",
     "prettytable < 4",
