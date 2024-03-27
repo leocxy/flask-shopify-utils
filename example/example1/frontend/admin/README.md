@@ -1,6 +1,15 @@
-# admin
+# Brief
 
 This template should help get you started developing with Vue 3 in Vite.
+
+The folder name is `frontend`, because we split the Frontend and Backend into two separate folders.
+For us, the `frontend` folder should includes all the UI, such as the Admin UI.
+The `backend` folder should includes all the server-side code.
+
+For [Shopify app structure](https://shopify.dev/docs/apps/tools/cli/structure), the `frontend` is the service that accepts the HTTP requests.
+It will created an tunnel via `ngrok` and forward the requests to the `frontend`.
+
+In our case, the `ngrok` should forward the requests to our `backend` endpoint.
 
 ## Recommended IDE Setup
 

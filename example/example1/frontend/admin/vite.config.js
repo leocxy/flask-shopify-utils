@@ -1,37 +1,51 @@
-import {fileURLToPath, URL} from 'node:url'
-import {defineConfig} from 'vite'
+import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-const host = process.env.HOST
-    ? process.env.HOST.replace(/https?:\/\//, "")
-    : "localhost";
 
-const backend_api = `http://127.0.0.1:${process.env.BACKEND_PORT || 5000}`
-
-let hmrConfig;
-if (host === "localhost") {
-    hmrConfig = {
-        protocol: "ws",
-        host: "localhost",
-        port: 64999,
-        clientPort: 64999,
-    };
-} else {
-    hmrConfig = {
-        protocol: "wss",
-        host: host,
-        port: process.env.FRONTEND_PORT,
-        clientPort: 443,
-    };
+const proxyOptions = {
+    target: `http://127.0.0.1:5000`,
+    changeOrigin: false,
+    secure: true,
+    ws: false
 }
 
+let proxy = {
+    '^/(\\?.*)?$': proxyOptions,
+    '^/admin(/|(\\?.*)?$)': proxyOptions
+}
+// yarn shopify app dev need proxy the extension to the backend server
+if ((process.env.IS_PROXY || '0') === '1') {
+    proxy['/func'] = proxyOptions
+}
 
-// https://vitejs.dev/config/
+const host = process.env.HOST
+    ? process.env.HOST.replace(/https?:\/\//, '')
+    : 'localhost'
+
+
+let hmrConfig
+if (host === 'localhost') {
+    hmrConfig = {
+        protocol: 'ws',
+        host: 'localhost',
+        port: 64999,
+        clientPort: 64999
+    }
+} else {
+    hmrConfig = {
+        protocol: 'wss',
+        host: host,
+        port: process.env.FRONTEND_PORT,
+        clientPort: 443
+    }
+}
+
 export default defineConfig({
     envDir: '../../',
     envPrefix: 'SHOPIFY_API_KEY',
     plugins: [
-        vue(),
+        vue()
     ],
     resolve: {
         alias: {
@@ -42,22 +56,11 @@ export default defineConfig({
         host: 'localhost',
         port: process.env.FRONTEND_PORT || 8080,
         hmr: hmrConfig,
-        proxy: {
-            '/admin': backend_api,
-            '/callback': backend_api,
-            '^/assets/.*': {
-                target: backend_api,
-                rewrite: (path) => path.replace(/^\/assets/, '/admin/assets'),
-            },
-            '^/proxy/.*': {
-                target: backend_api,
-                rewrite: (path) => path.replace(/^\/proxy/, ''),
-            },
-        },
+        proxy
     },
     base: process.env.npm_lifecycle_event.includes('build') ? '/admin' : '/',
     build: {
         outDir: '../../dist/admin',
-        emptyOutDir: true,
+        emptyOutDir: true
     }
 })

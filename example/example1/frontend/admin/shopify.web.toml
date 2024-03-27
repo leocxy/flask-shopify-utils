@@ -5,4 +5,4 @@ auth_callback_path = ["/proxy/callback", '/callback']
 webhooks_path = "/proxy/webhook"
 
 [commands]
-dev = "yarn dev"
+dev = "yarn build && cross-env IS_PROXY=1 yarn vite"

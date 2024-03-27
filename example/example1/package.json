@@ -1,6 +1,24 @@
 {
-  "dependencies": {
-    "@shopify/app": "^3.48.0",
-    "@shopify/cli": "^3.48.0"
-  }
+    "name": "shopify-app",
+    "version": "0.2.0",
+    "private": true,
+    "author": "Leo Chen <leo.cxy88@gmail.com",
+    "scripts": {
+        "dev": "yarn shopify app dev",
+        "deploy": "yarn shopify app deploy"
+    },
+    "dependencies": {
+        "@shopify/app": "^3.57.1",
+        "@shopify/cli": "^3.57.1",
+        "@shopify/shopify_function": "0.1.0",
+        "javy": "0.1.1"
+    },
+    "devDependencies": {
+        "cross-env": "^7.0.3"
+    },
+    "engines": {
+        "node": ">=18",
+        "yarn": "1.x"
+    },
+    "engineStrict": true
 }
