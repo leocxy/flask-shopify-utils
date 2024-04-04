@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -660,7 +660,8 @@ class ShopifyUtil:
             record.scopes = ','.join(list(map(lambda x: x['handle'], scopes['accessScopes'])))
             self.db.commit()
             # Register GDPR mandatory webhook @todo
-            return redirect('https://{}/admin/app/{}'.format(
+            # https://shopify.dev/docs/apps/auth/get-access-tokens/authorization-code-grant/getting-started
+            return redirect('https://{}/apps/{}'.format(
                 g.store_key,
                 self.config.get('SHOPIFY_API_KEY'))
             )
