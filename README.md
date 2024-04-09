@@ -91,7 +91,7 @@ $ pip install -r requirements/dev.txt && pip install -e .
 # check
 >twine check dist/*
 # upload
->twine upload dist/*
+>twine upload dist/* --skip-existing
 ```
 
 ## requirements.txt
