@@ -6,23 +6,43 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 01/02/24 2:54 pm
 """
-from os import getenv
+from os import getenv, path
 from requests import Session
 from typing import Tuple, TypeVar
 from simplejson import dumps
+from logging import Formatter, Logger
+from logging.handlers import RotatingFileHandler
+from time import sleep
 # custom modules
-from app.utils.base import BasicHelper, fn_debug
+from app import app
+from app.utils.base import fn_debug
 
 MSG_TYPE = TypeVar("MSG_TYPE", str, None)
 
 
-class KlaviyoHelper(BasicHelper):
-    def __init__(self, store_id: int = 1, log_name: str = 'klaviyo_helper') -> None:
-        super(KlaviyoHelper, self).__init__(store_id, log_name)
+class KlaviyoHelper(object):
+    def __init__(self, log_name: str = 'klaviyo_helper') -> None:
         # Klaviyo Token
         token = getenv('KLAVIYO_PRIVATE_KEY', None)
         if not token:
             raise Exception('Klaviyo Token is not set up yet!')
+        self.logger = Logger('KlaviyoHelper')
+        # Logger
+        self.logger = Logger('BasicHelper')
+        handler = RotatingFileHandler(
+            path.join(app.config.get('TEMPORARY_PATH'), f'{log_name}.log'),
+            maxBytes=5120000,
+            backupCount=5
+        )
+        handler.setFormatter(Formatter('[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'))
+        if app.config.get('FLASK_DEBUG', '1') == '1':
+            level = 'DEBUG'
+            self.logger.addHandler(app.logger.handlers[0])
+        else:
+            level = 'INFO'
+        handler.setLevel(level)
+        self.logger.addHandler(handler)
+        # Custom variables
         self.token = token
         self.version = '2023-12-15'
         self.client = Session()
@@ -31,6 +51,10 @@ class KlaviyoHelper(BasicHelper):
             "revision": self.version
         })
         self._url = 'https://a.klaviyo.com/api'
+
+    @property
+    def url(self) -> str:
+        return self._url
 
     @fn_debug
     def create_event(self, data: dict, attempt: int = 5) -> bool:
@@ -71,6 +95,7 @@ class KlaviyoHelper(BasicHelper):
             self.logger.error('Func: {}, Error: {}'.format(func, res.text))
             if attempt > 0:
                 self.logger.warning('Func: {}, Retry: {}'.format(func, attempt))
+                sleep(1)
                 return self.update_profile(profile_id, params, attempt - 1)
             return False
         return True
