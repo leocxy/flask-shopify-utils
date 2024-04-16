@@ -11,11 +11,11 @@ const proxyOptions = {
 }
 
 let proxy = {
-    '^/(\\?.*)?$': proxyOptions,
     '^/admin(/|(\\?.*)?$)': proxyOptions
 }
 // yarn shopify app dev need proxy the extension to the backend server
 if ((process.env.IS_PROXY || '0') === '1') {
+    proxy['^/(\\?.*)?$'] = proxyOptions
     proxy['/func'] = proxyOptions
 }
 

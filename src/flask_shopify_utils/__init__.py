@@ -661,7 +661,7 @@ class ShopifyUtil:
             self.db.commit()
             # Register GDPR mandatory webhook @todo
             # https://shopify.dev/docs/apps/auth/get-access-tokens/authorization-code-grant/getting-started
-            return redirect('https://{}/apps/{}'.format(
+            return redirect('https://{}/admin/apps/{}'.format(
                 g.store_key,
                 self.config.get('SHOPIFY_API_KEY'))
             )
