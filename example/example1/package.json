@@ -2,7 +2,7 @@
     "name": "shopify-app",
     "version": "0.2.0",
     "private": true,
-    "author": "Leo Chen <leo.cxy88@gmail.com",
+    "author": "Leo Chen <leo.cxy88@gmail.com>",
     "scripts": {
         "dev": "yarn shopify app dev",
         "deploy": "yarn shopify app deploy"
