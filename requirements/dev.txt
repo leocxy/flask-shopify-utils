@@ -4,7 +4,9 @@
 #
 #    pip-compile --extra=dev --output-file=requirements/dev.txt
 #
-blinker==1.7.0
+backports-tarfile==1.1.1
+    # via jaraco-context
+blinker==1.8.2
     # via flask
 build==1.2.1
     # via flask-shopify-utils (pyproject.toml)
@@ -16,11 +18,11 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via flask
-docutils==0.20.1
+docutils==0.21.2
     # via readme-renderer
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via pytest
-flask==3.0.2
+flask==3.0.3
     # via
     #   flask-shopify-utils (pyproject.toml)
     #   flask-sqlalchemy
@@ -28,7 +30,7 @@ flask-sqlalchemy==3.1.1
     # via flask-shopify-utils (pyproject.toml)
 graphql-core==3.2.3
     # via sgqlc
-idna==3.6
+idna==3.7
     # via requests
 importlib-metadata==7.1.0
     # via
@@ -38,17 +40,17 @@ importlib-metadata==7.1.0
     #   twine
 iniconfig==2.0.0
     # via pytest
-itsdangerous==2.1.2
+itsdangerous==2.2.0
     # via flask
 jaraco-classes==3.4.0
     # via keyring
-jaraco-context==5.0.0
+jaraco-context==5.3.0
     # via keyring
-jaraco-functools==4.0.0
+jaraco-functools==4.0.1
     # via keyring
-jinja2==3.1.3
+jinja2==3.1.4
     # via flask
-keyring==25.1.0
+keyring==25.2.1
     # via twine
 markdown-it-py==3.0.0
     # via rich
@@ -70,13 +72,13 @@ packaging==24.0
     #   pytest
 pkginfo==1.10.0
     # via twine
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
 psutil==5.9.8
     # via flask-shopify-utils (pyproject.toml)
 pyactiveresource==2.2.2
     # via shopifyapi
-pygments==2.17.2
+pygments==2.18.0
     # via
     #   readme-renderer
     #   rich
@@ -84,9 +86,9 @@ pyjwt==2.8.0
     # via
     #   flask-shopify-utils (pyproject.toml)
     #   shopifyapi
-pyproject-hooks==1.0.0
+pyproject-hooks==1.1.0
     # via build
-pytest==8.1.1
+pytest==8.2.0
     # via flask-shopify-utils (pyproject.toml)
 pytz==2024.1
     # via flask-shopify-utils (pyproject.toml)
@@ -115,22 +117,21 @@ six==1.16.0
     # via
     #   pyactiveresource
     #   shopifyapi
-sqlalchemy==2.0.29
+sqlalchemy==2.0.30
     # via flask-sqlalchemy
 tomli==2.0.1
     # via
     #   build
-    #   pyproject-hooks
     #   pytest
 twine==5.0.0
     # via flask-shopify-utils (pyproject.toml)
-typing-extensions==4.10.0
+typing-extensions==4.11.0
     # via sqlalchemy
 urllib3==2.2.1
     # via
     #   requests
     #   twine
-werkzeug==3.0.2
+werkzeug==3.0.3
     # via flask
 zipp==3.18.1
     # via importlib-metadata
