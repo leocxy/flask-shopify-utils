@@ -100,19 +100,18 @@ class BasicHelper:
             return False, res['userErrors']
         return True, res['metafields'][0]['id'].split('/')[-1]
 
-    @staticmethod
-    def debug(func):
-        """
-        debug decorator
-        Capture the input and output of the function
-        """
 
-        @wraps(func)
-        def decorator(*args, **kwargs):
-            args[0].logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:]))
-            result = func(*args, **kwargs)
-            args[0].logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
-            return result
+def fn_debug(func):
+    """
+    debug decorator
+    Capture the input and output of the function
+    """
 
-        return decorator
+    @wraps(func)
+    def decorator(*args, **kwargs):
+        args[0].logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:]))
+        result = func(*args, **kwargs)
+        args[0].logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
+        return result
 
+    return decorator
