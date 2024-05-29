@@ -53,3 +53,13 @@ def test_instance(initial):
             db.session.commit()
             app.config['BYPASS_VALIDATE'] = record.id
             yield client, test
+
+
+@fixture(scope='function')
+def klaviyo(initial):
+    """  initial the klaviyo class """
+    app, db, app_utils, test = initial
+    from app.utils.klaviyo import KlaviyoHelper
+    helper = KlaviyoHelper()
+    yield helper, test
+

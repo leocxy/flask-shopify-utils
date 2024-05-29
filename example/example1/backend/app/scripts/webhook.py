@@ -54,6 +54,7 @@ def webhook_list(helper):
             cursor = res['edges'][-1]['cursor']
         else:
             break
+    print('Store: {}'.format(helper.store.key))
     print(table)
 
 
@@ -96,6 +97,7 @@ def webhook_revoke(helper):
             table.add_row([webhooks[alias]['id'], webhooks[alias]['topic'], False, msg])
         else:
             table.add_row([webhooks[alias]['id'], webhooks[alias]['topic'], True, 'Revoked'])
+    print('Store: {}'.format(helper.store.key))
     print(table)
 
 
@@ -122,4 +124,5 @@ def webhook_register(helper):
             table.add_row([topic, topics[topic], msg])
         else:
             table.add_row([topic, topics[topic], 'Success'])
+    print('Store: {}'.format(helper.store.key))
     print(table)

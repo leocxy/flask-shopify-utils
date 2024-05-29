@@ -15,6 +15,7 @@ let proxy = {
 }
 // yarn shopify app dev need proxy the extension to the backend server
 if ((process.env.IS_PROXY || '0') === '1') {
+    proxy['^/api(/|(\\?.*)?$)'] = proxyOptions
     proxy['^/(\\?.*)?$'] = proxyOptions
     proxy['/func'] = proxyOptions
 }

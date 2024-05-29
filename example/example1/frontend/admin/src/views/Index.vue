@@ -1,6 +1,6 @@
 <template>
-    <Layout>
-        <Card>
+    <Layout sectioned>
+        <Card sectioned>
             <EmptyState v-bind="args">
                 <p>Track and receive your incoming inventory from suppliers.</p>
                 <template #footerContent>

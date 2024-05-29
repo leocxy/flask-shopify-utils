@@ -1,8 +1,8 @@
 <template>
     <AppProvider>
         <Frame>
-            <Page :title="title" full-width>
-                <RouterView @updateTitle="updateTitle"/>
+            <Page :title="title" :full-width="full_width">
+                <RouterView @updateTitle="updateTitle" @setFullWidth="setFullWidth" />
                 <FooterHelp v-show="change">
                     <Link @click="updateScopes">Update</Link>
                     app scopes to get full functionality.
@@ -32,6 +32,7 @@ import {useDefault} from "./stores/index"
 const $http = inject('$http')
 const change = ref(false)
 const title = ref('Vue3 App')
+const full_width = ref(false)
 const {success_toast, error_toast, getApi, errorCallback} = useDefault()
 // const route = useRoute()
 const checkAppScopes = () => {
@@ -39,6 +40,8 @@ const checkAppScopes = () => {
 }
 
 const updateTitle = (val) => title.value = val
+
+const setFullWidth = (val) => full_width.value = val
 
 const updateScopes = () => {
     $http.get(getApi('check', 'reinstall')).then(({data}) => {
