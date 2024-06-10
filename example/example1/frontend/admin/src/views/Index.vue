@@ -1,34 +1,22 @@
 <template>
     <Layout sectioned>
-        <Card sectioned>
-            <EmptyState v-bind="args">
+        <LegacyCard sectioned>
+            <EmptyState
+                heading="Manage your inventory transfers"
+                :action="{ content: 'Add transfer' }"
+                :secondary-action="{ content: 'Learn more', url: 'https://help.shopify.com' }"
+                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+            >
                 <p>Track and receive your incoming inventory from suppliers.</p>
-                <template #footerContent>
-                    <p>
-                        If you don't want to add a transfer, you can import your inventory from
-                        <Link monochrome url="/settings"> settings</Link>.
-                    </p>
-                </template>
             </EmptyState>
-        </Card>
+        </LegacyCard>
     </Layout>
 </template>
 
 <script setup>
-import {ref, onMounted, inject} from 'vue'
+import {inject} from 'vue'
 import {useDefault} from "../stores/index"
 
 const $http = inject('$http')
-const {errorCallback, getApi, success_toast} = useDefault()
-const isSaving = ref(false)
-
-
-onMounted(() => {
-    isSaving.value = true
-    $http.get(getApi('test_jwt')).then(() => {
-        isSaving.value = false
-        success_toast.content = 'This should never work!'
-        success_toast.active = true
-    }).catch(err => errorCallback(err, isSaving))
-})
+const {errorCallback, getApi} = useDefault()
 </script>
