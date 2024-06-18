@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -561,12 +561,12 @@ class ShopifyUtil:
         """
         from flask_shopify_utils.model import Store
 
-        static_folder = path.join(self.config.get('ROOT_PATH'), 'dist', 'docs')
+        static_folder = path.join(self.config.get('ROOT_PATH'), 'dist')
         doc_routes = Blueprint(
             'docs_default',
             'docs_routes',
-            static_folder=static_folder,
             template_folder=static_folder,
+            static_folder=path.join(static_folder, 'docs'),
         )
 
         @doc_routes.route('/docs', methods=['GET'])
@@ -575,17 +575,43 @@ class ShopifyUtil:
             Show the docs for default message
             """
             try:
-                return make_response(render_template('index.html'))
+                return make_response(render_template('docs/index.html'))
             except TemplateNotFound:
                 return make_response('Please contact "dev@pocketsquare.co.nz" for more information.')
 
-        static_folder = path.join(self.config.get('ROOT_PATH'), 'dist', 'admin')
         default_routes = Blueprint(
             'shopify_default',
             'shopify_default_routes',
-            static_folder=static_folder,
             template_folder=static_folder,
+            static_folder=path.join(static_folder, 'admin'),
         )
+
+        @self.app.errorhandler(404)
+        def missing(e) -> Response:
+            params = request.args
+            if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) >= 4:
+                # check hmac, if pass, show render the index.html
+                error_redirect = redirect(url_for('shopify_default.admin', **params))
+                # Check timestamp
+                timestamp1 = int(request.args.get('timestamp', '0'))
+                timestamp2 = int(time()) - 86400
+                if timestamp1 < timestamp2:
+                    return error_redirect
+                # Check Hmac
+                if not compare_digest(self.validate_hmac(params), request.args.get('hmac', '')):
+                    return error_redirect
+                store_key = params.get('shop', '')
+                store = self.db.query(Store).filter_by(key=store_key).first()
+                if not store:
+                    return error_redirect
+                g.store_id = store.id
+                return make_response(render_template(
+                    'admin/index.html',
+                    jwtToken=self.create_admin_jwt_token()
+                ))
+            # redirect to the docs page
+            return redirect(url_for('docs_default.index'))
+
 
         @default_routes.route('/admin', methods=['GET'], endpoint='admin')
         @self.check_hmac
@@ -607,7 +633,7 @@ class ShopifyUtil:
             # Render the Embedded App Index Page
             try:
                 code = render_template(
-                    'index.html',
+                    'admin/index.html',
                     jwtToken=self.create_admin_jwt_token()
                 )
             except TemplateNotFound:
