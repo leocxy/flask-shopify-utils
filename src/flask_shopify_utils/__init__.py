@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -565,12 +565,11 @@ class ShopifyUtil:
         doc_routes = Blueprint(
             'docs_default',
             'docs_routes',
-            url_prefix='/docs',
             static_folder=static_folder,
             template_folder=static_folder,
         )
 
-        @doc_routes.route('', methods=['GET'])
+        @doc_routes.route('/docs', methods=['GET'])
         def index() -> Response:
             """
             Show the docs for default message
