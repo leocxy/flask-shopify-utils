@@ -2,21 +2,29 @@
     <Layout sectioned>
         <LegacyCard sectioned>
             <EmptyState
-                heading="Manage your inventory transfers"
-                :action="{ content: 'Add transfer' }"
-                :secondary-action="{ content: 'Learn more', url: 'https://help.shopify.com' }"
-                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-            >
-                <p>Track and receive your incoming inventory from suppliers.</p>
+                heading="Example Empty State"
+                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
             </EmptyState>
         </LegacyCard>
     </Layout>
 </template>
 
 <script setup>
-import {inject} from 'vue'
-import {useDefault} from "../stores/index"
+import {ref, onMounted, inject} from 'vue'
+import {useRouter} from 'vue-router'
+import {useDefault} from '../stores/index'
 
 const $http = inject('$http')
-const {errorCallback, getApi} = useDefault()
+const router = useRouter()
+const {errorCallback, getApi, showToast} = useDefault()
+const isSaving = ref(false)
+
+
+onMounted(() => {
+    isSaving.value = true
+    $http.get(getApi('test_jwt')).then(() => {
+        isSaving.value = false
+        showToast('The test JWT is working!')
+    }).catch(err => errorCallback(err, isSaving))
+})
 </script>

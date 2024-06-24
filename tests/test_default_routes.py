@@ -126,14 +126,8 @@ def test_admin_index_route(initial_test_client):
     test.assertEqual(res.status_code, 401)
     result = res.get_json()
     test.assertDictEqual(result, dict(status=401, message='Invalid HMAC', data=[]))
-    # Error - No Database Record
-    del params['hmac']
-    params['hmac'] = utils.validate_hmac(params)
-    res = client.get('/admin?{}'.format(urlencode(params)))
-    result = res.get_json()
-    test.assertEqual(res.status_code, 404)
-    test.assertIn('not found in database!', result.get('message'))
     # Bypass - pass
+    params['hmac'] = utils.validate_hmac(params)
     utils.config['BYPASS_VALIDATE'] = 1
     res = client.get('/admin?{}'.format(urlencode(params)))
     test.assertEqual(res.status_code, 200)

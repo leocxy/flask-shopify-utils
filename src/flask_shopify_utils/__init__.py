@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -369,8 +369,9 @@ class ShopifyUtil:
             rs, data = self.validate_jwt()
             if not rs:
                 return data
-            g.store_id = data['store_id']
-            g.jwt_expire_time = data['expire_time']
+            g.store_id = data.get('store_id')
+            g.store_key = data.get('store_key')
+            g.jwt_expire_time = data.get('expire_time')
             return func(*args, **kwargs)
 
         return decorator
@@ -379,6 +380,7 @@ class ShopifyUtil:
         expire_time = datetime.utcnow() + timedelta(minutes=30)
         return jwt_encode(dict(
             store_id=g.store_id,
+            store_key=g.store_key,
             expire_time=int(expire_time.timestamp()),
             exp=expire_time,
         ), self.config.get('SHOPIFY_API_SECRET'), algorithm='HS256')
@@ -494,6 +496,20 @@ class ShopifyUtil:
         types = dict(monthly='%Y%m%d%H%M%SM', daily='%Y%m%d%H%M%SD', hourly='%Y%m%d%H%M%SH')
         return types.get(val, '%Y%m%d%H%M%SH')
 
+    @classmethod
+    def format_api_scopes(cls, data: list) -> str:
+        scopes = {}
+        for v in data:
+            permission, name = v.split('_', 1)
+            if name not in scopes.keys():
+                scopes[name] = permission
+            elif permission == 'write':
+                scopes[name] = permission
+        data = []
+        for k, v in scopes.items():
+            data.append('{}_{}'.format(v, k))
+        return ','.join(data)
+
     def generate_internal_hash(self, value, expired_time: str = 'daily') -> str:
         """
         Generate internal hash for proxy APIs or something internal use
@@ -600,8 +616,8 @@ class ShopifyUtil:
                 # Check Hmac
                 if not compare_digest(self.validate_hmac(params), request.args.get('hmac', '')):
                     return error_redirect
-                store_key = params.get('shop', '')
-                store = self.db.query(Store).filter_by(key=store_key).first()
+                g.store_key = params.get('shop', '')
+                store = self.db.query(Store).filter_by(key=g.store_key).first()
                 if not store:
                     return error_redirect
                 g.store_id = store.id
@@ -612,7 +628,6 @@ class ShopifyUtil:
             # redirect to the docs page
             return redirect(url_for('docs_default.index'))
 
-
         @default_routes.route('/admin', methods=['GET'], endpoint='admin')
         @self.check_hmac
         def admin() -> Response:
@@ -622,19 +637,12 @@ class ShopifyUtil:
                 g.store_id = bypass
             else:
                 store = self.db.query(Store).filter_by(key=g.store_key).first()
-                if not store:
-                    msg = '{} not found in database! \n'.format(g.store_key)
-                    msg += 'You can install the app via this URL: \n'
-                    msg += url_for('shopify_default.install', shop=g.store_key, _external=True, _scheme='https')
-                    resp = self.proxy_response(404, msg)
-                    resp.status_code = 404
-                    return resp
-                g.store_id = store.id
+                g.store_id = store.id if store else 0
             # Render the Embedded App Index Page
             try:
                 code = render_template(
                     'admin/index.html',
-                    jwtToken=self.create_admin_jwt_token()
+                    jwtToken=self.create_admin_jwt_token(),
                 )
             except TemplateNotFound:
                 return self.proxy_response(0, 'Oops... The `index.html` is gone!')
@@ -682,7 +690,7 @@ class ShopifyUtil:
                 resp = self.proxy_response(500, 'Something went wrong while fetching installation data!')
                 resp.status_code = 500
                 return resp
-            record.scopes = ','.join(list(map(lambda x: x['handle'], scopes['accessScopes'])))
+            record.scopes = self.format_api_scopes(list(map(lambda x: x['handle'], scopes['accessScopes'])))
             self.db.commit()
             # Register GDPR mandatory webhook @todo
             # https://shopify.dev/docs/apps/auth/get-access-tokens/authorization-code-grant/getting-started
@@ -794,14 +802,7 @@ class ShopifyUtil:
                 g.store_id = bypass
             else:
                 store = self.db.query(Store).filter_by(key=g.store_key).first()
-                if not store:
-                    msg = '{} not found in database! \n'.format(g.store_key)
-                    msg += 'You can install the app via this URL: \n'
-                    msg += url_for('shopify_default.install', shop=g.store_key, _external=True, _scheme='https')
-                    resp = self.proxy_response(404, msg)
-                    resp.status_code = 404
-                    return resp
-                g.store_id = store.id
+                g.store_id = store.id if store else 0
             return self.admin_response(data=dict(
                 apiKey=self.config.get('SHOPIFY_API_KEY'),
                 jwtToken=self.create_admin_jwt_token()
@@ -812,17 +813,21 @@ class ShopifyUtil:
         def check_scopes(action):
             """ Check the granted scopes is update to date or not """
             if action not in ['reinstall', 'status']:
-                return self.admin_response()
+                return self.admin_response(400, 'Action[{}] is not supported!'.format(action))
+            # check record
             record = Store.query.filter_by(id=g.store_id).first()
-            if not record:
-                return self.admin_response(400, 'Store[{}] does not exist!'.format(g.store_id))
-            if action == 'reinstall':
+            if not record or action == 'reinstall':
+                shop = record.key if record else g.store_key
+                print(g.store_id, g.store_key)
+                if not shop:
+                    return self.admin_response(400, 'Shop is missing from request!')
                 return self.admin_response(
-                    data=url_for('shopify_default.install', shop=record.key, _external=True, _scheme='https'))
-            current_scopes = record.scopes.lower().split(',')
-            scopes = self.config.get('SCOPES').lower().split(',')
-            removes = [v for v in current_scopes if v not in scopes]
-            adds = [v for v in scopes if v not in current_scopes]
+                    data=url_for('shopify_default.install', shop=shop, _external=True, _scheme='https')
+                )
+            current_scopes = self.format_api_scopes(record.scopes.lower().split(',')).split(',')
+            expected_scopes = self.format_api_scopes(self.config.get('SCOPES').lower().split(',')).split(',')
+            removes = [v for v in current_scopes if v not in expected_scopes]
+            adds = [v for v in expected_scopes if v not in current_scopes]
             return self.admin_response(data=dict(
                 removes=removes,
                 adds=adds,

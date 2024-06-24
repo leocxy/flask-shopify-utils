@@ -17,13 +17,17 @@ import {useRoute, useRouter} from "vue-router"
 
 const $http = inject('$http')
 const change = ref(false)
-const title = ref('PS x Mr Ralph')
+const title = ref('Example')
 const full_width = ref(false)
-const {getApi, errorCallback, showToast} = useDefault()
+const {getApi, errorCallback, showToast, redirectRemote} = useDefault()
 const route = useRoute()
 const router = useRouter()
 const checkAppScopes = () => {
-    $http.get(getApi('check', 'status')).then(({data}) => change.value = data.data.change).catch(errorCallback)
+    $http.get(getApi('check', 'status')).then(({data}) => {
+        data = data.data
+        if (data?.change !== undefined) return change.value = data.change
+        return redirectRemote(data, '_top')
+    }).catch(errorCallback)
 }
 
 const updateTitle = (val) => title.value = val
@@ -32,9 +36,7 @@ const setFullWidth = (val) => full_width.value = val
 
 const updateScopes = () => {
     $http.get(getApi('check', 'reinstall')).then(({data}) => {
-        data = data.data
-        if (window.self === window.top) return window.location.href = data
-        // redirectRemote(data)
+        redirectRemote(data.data, '_top')
     }).catch(err => errorCallback(err))
 }
 
