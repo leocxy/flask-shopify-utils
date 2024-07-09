@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -816,9 +816,16 @@ class ShopifyUtil:
                 return self.admin_response(400, 'Action[{}] is not supported!'.format(action))
             # check record
             record = Store.query.filter_by(id=g.store_id).first()
+            if record:
+                try:
+                    obj = GraphQLClient(record.key, record.token)
+                    raw_query = '{ app { availableAccessScopes { handle } } }'
+                    _ = obj.fetch_data(raw_query)
+                except Exception as e:
+                    if 'HTTPError 401' in e.__str__():
+                        record = None
             if not record or action == 'reinstall':
                 shop = record.key if record else g.store_key
-                print(g.store_id, g.store_key)
                 if not shop:
                     return self.admin_response(400, 'Shop is missing from request!')
                 return self.admin_response(

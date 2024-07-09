@@ -22,6 +22,7 @@ const full_width = ref(false)
 const {getApi, errorCallback, showToast, redirectRemote} = useDefault()
 const route = useRoute()
 const router = useRouter()
+
 const checkAppScopes = () => {
     $http.get(getApi('check', 'status')).then(({data}) => {
         data = data.data
