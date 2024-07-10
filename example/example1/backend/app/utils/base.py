@@ -153,14 +153,31 @@ class DiscountHelper(ABC, BasicHelper):
     def format_record_data(cls, data: dict) -> Tuple[dict, Optional[dict]]:
         pass
 
-    @classmethod
-    @abstractmethod
-    def record_to_dict(cls, record: DiscountCode) -> dict:
-        pass
-
     @abstractmethod
     def format_meta_data(self, data: dict, owner_id: str = None) -> list:
         pass
+
+    @classmethod
+    def record_to_dict(cls, record: DiscountCode) -> dict:
+        """ You might need to rewrite this method """
+        output = dict(
+            id=record.code_id,
+            type=record.convert_code_type(record.code_type, True),
+            title=record.code_name,
+            message=record.message,
+            discount_value=record.discount_value,
+            combine_with_product=record.combine_with_product == 1,
+            combine_with_order=record.combine_with_order == 1,
+            combine_with_shipping=record.combine_with_shipping == 1,
+            start_date=record.start_date.strftime('%Y-%m-%dT%H:%M:%S') if record.start_date else None,
+            enable_end_date=False,
+            end_date=None,
+        )
+        if record.end_date:
+            output['enable_end_date'] = True
+            output['end_date'] = record.end_date.strftime('%Y-%m-%dT%H:%M:%S')
+        output.update(record.get_extra())
+        return output
 
     def format_discount_code_input_data(self, record: DiscountCode) -> dict:
         input_data = dict(
