@@ -24,6 +24,6 @@
   "workspaces": [
     "extensions/*",
     "frontend/admin",
-    "bakend"
+    "backend"
   ]
 }

@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 
 
 const proxyOptions = {
-    target: `http://127.0.0.1:5000`,
+    target: `http://127.0.0.1:${process.env?.BACKEND_PORT ?? '5000'}`,
     changeOrigin: false,
     secure: true,
     ws: false
