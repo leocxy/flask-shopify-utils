@@ -18,7 +18,7 @@ app.use(PolarisVue)
 Axios.interceptors.response.use(function (response) {
     if (response.status === 200 && response.data instanceof Blob) return response
     // initial the admin JWT
-    if (response.data?.jwtToken) app.config.globalProperties.$http.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwtToken}`
+    if (response.data?.jwtToken) Axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwtToken}`
     if (response.data.status !== 0) return Promise.reject(response)
     return response
 }, function (error) {

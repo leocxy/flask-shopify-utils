@@ -276,7 +276,7 @@ class DiscountHelper(ABC, BasicHelper):
         self.logger.debug('CodeCreate: %s', dumps(res))
         record.code_id = res['codeAppDiscount']['discountId'].split('/')[-1]
         db.session.commit()
-        return True, None, record.to_dict()
+        return True, None, self.record_to_dict(record)
 
     def _update_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         op = Operation(shopify_schema.mutation_type, 'UpdateCode')
@@ -303,7 +303,7 @@ class DiscountHelper(ABC, BasicHelper):
             self.logger.error('UpdateMetaError: %s', msg)
             return False, 'Update discount code failed!', res['userErrors']
         db.session.commit()
-        return True, None, record.to_dict()
+        return True, None, self.record_to_dict(record)
 
     def _delete_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         op = Operation(shopify_schema.mutation_type, 'DeleteCode')

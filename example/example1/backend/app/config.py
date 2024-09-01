@@ -40,3 +40,5 @@ class Config:
     # Flask-SQLAlchemy
     SQLALCHEMY_DATABASE_URI = getenv('DATABASE_URL', 'sqlite:///' + join(BACKEND_PATH, 'app.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # https://flask.palletsprojects.com/en/3.0.x/blueprints/
+    EXPLAIN_TEMPLATE_LOADING = False
