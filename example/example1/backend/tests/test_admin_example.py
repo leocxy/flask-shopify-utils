@@ -19,5 +19,9 @@ def test_api_test_jwt(test_instance) -> None:
 def test_api_check_status(test_instance) -> None:
     client, test = test_instance
     rv = client.get('/admin/check/status')
-    expect = dict(status=0, message='success', data=dict(adds=[], change=False, removes=[]))
-    test.assertDictEqual(rv.get_json(), expect)
+    # the endpoint will check API scopes via Shopify API,
+    # because it is fake, it will redirect to the legacy install URL
+    # expect = dict(status=0, message='success', data=dict(adds=[], change=False, removes=[]))
+    # test.assertDictEqual(rv.get_json(), expect)
+    data = rv.get_json()
+    test.assertIn('https://localhost/install?shop', data['data'])

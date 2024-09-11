@@ -1,15 +1,20 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "Custom App name"
 client_id = "d72f74c1687310e"
+name = "Custom App name"
+handle = "custom-app-name"
 application_url = "https://merely-wyoming-genome-advances.trycloudflare.com"
 embedded = true
 web_directories = [ "frontend/admin", "backend" ]
 
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "pocket-square-sandbox.myshopify.com"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customers,read_products,read_shipping,write_shipping"
-use_legacy_install_flow = true
+use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
@@ -18,11 +23,17 @@ redirect_urls = [
 ]
 
 [webhooks]
-api_version = "2023-07"
+api_version = "2024-07"
+
+  [webhooks.privacy_compliance]
+  customer_deletion_url = "https://merely-wyoming-genome-advances.trycloudflare.com/webhook/customers/redact"
+  customer_data_request_url = "https://merely-wyoming-genome-advances.trycloudflare.com/webhook/customers/data_request"
+  shop_deletion_url = "https://merely-wyoming-genome-advances.trycloudflare.com/webhook/shop/redact"
+
+[app_proxy]
+url = "https://merely-wyoming-genome-advances.trycloudflare.com/proxy"
+subpath = "ps"
+prefix = "apps"
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "pocket-square-sandbox.myshopify.com"

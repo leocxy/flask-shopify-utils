@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.1.9'
+__version__ = '0.1.10'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -541,6 +541,9 @@ class ShopifyUtil:
             if not token:
                 resp = self.proxy_response(401, '`Custom-Token` is missing from Header')
                 return resp
+            token = token.strip()
+            if token.startswith('Bearer '):
+                token = token[7:]
             value = str(kwargs.get(key_name, ''))
             dynamic_value = token[-15:]
             signature1 = token[:-15]
@@ -890,6 +893,14 @@ class ShopifyUtil:
             args.func(args)
             # remove the json file
             remove(json_file)
+            # append version to the header of the file
+            with open(target_path, 'r') as f:
+                text = f.read()
+            with open(target_path, 'w') as f:
+                f.write('# API Version: {}\n'.format(version))
+                f.write('# With deprecated: {}\n'.format(with_deprecated))
+                f.write('# Generated At: {}\n'.format(datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')))
+                f.write(text)
             msg = 'GraphQL Schema for "{}" has been generated! \n'.format(version)
             msg += 'Please check the file: {}'.format(target_path)
             echo(msg)
