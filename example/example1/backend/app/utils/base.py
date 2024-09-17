@@ -163,7 +163,8 @@ class DiscountHelper(ABC, BasicHelper):
         output = dict(
             id=record.code_id,
             type=record.convert_code_type(record.code_type, True),
-            title=record.code_name,
+            code=None,
+            title=None,
             message=record.message,
             discount_value=record.discount_value,
             combine_with_product=record.combine_with_product == 1,
@@ -173,6 +174,10 @@ class DiscountHelper(ABC, BasicHelper):
             enable_end_date=False,
             end_date=None,
         )
+        if record.code_type == 0:
+            output['code'] = record.code_name
+        else:
+            output['title'] = record.code_name
         if record.end_date:
             output['enable_end_date'] = True
             output['end_date'] = record.end_date.strftime('%Y-%m-%dT%H:%M:%S')
