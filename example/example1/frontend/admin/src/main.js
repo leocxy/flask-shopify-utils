@@ -20,7 +20,7 @@ Axios.interceptors.response.use(function (response) {
     // initial the admin JWT
     if (response.data?.jwtToken) Axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.jwtToken}`
     if (response.data.status !== 0) return Promise.reject(response)
-    return response
+    return response.data
 }, function (error) {
     return Promise.reject(error)
 })

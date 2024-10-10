@@ -19,7 +19,7 @@ double check the path and remove the '/backend' from the path
 """
 if ROOT_PATH.endswith('/backend'):
     ROOT_PATH = ROOT_PATH[:-8]
-load_dotenv(dotenv_path=join(ROOT_PATH, '.env'))
+load_dotenv(dotenv_path=join(ROOT_PATH, '.env'), override=True)
 
 
 class Config:

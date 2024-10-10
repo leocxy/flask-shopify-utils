@@ -16,7 +16,8 @@ import {useDefault} from '../stores/index'
 
 const $http = inject('$http')
 const router = useRouter()
-const {errorCallback, getApi, showToast} = useDefault()
+const store = useDefault()
+const {errorCallback, getApi, showToast} = store
 const isSaving = ref(false)
 
 

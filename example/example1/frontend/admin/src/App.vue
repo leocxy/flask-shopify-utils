@@ -25,7 +25,6 @@ const router = useRouter()
 
 const checkAppScopes = () => {
     $http.get(getApi('check', 'status')).then(({data}) => {
-        data = data.data
         if (data?.change !== undefined) return change.value = data.change
         return redirectRemote(data, '_top')
     }).catch(errorCallback)
@@ -37,7 +36,7 @@ const setFullWidth = (val) => full_width.value = val
 
 const updateScopes = () => {
     $http.get(getApi('check', 'reinstall')).then(({data}) => {
-        redirectRemote(data.data, '_top')
+        redirectRemote(data, '_top')
     }).catch(err => errorCallback(err))
 }
 
