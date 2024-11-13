@@ -4,33 +4,33 @@
 #
 #    pip-compile --output-file=requirements/index.txt
 #
-blinker==1.8.2
+blinker==1.9.0
     # via flask
 cerberus==1.3.5
     # via flask-shopify-utils (pyproject.toml)
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via flask
-flask==3.0.3
+flask==3.1.0
     # via
     #   flask-shopify-utils (pyproject.toml)
     #   flask-sqlalchemy
 flask-sqlalchemy==3.1.1
     # via flask-shopify-utils (pyproject.toml)
-graphql-core==3.2.3
+graphql-core==3.2.5
     # via sgqlc
-idna==3.7
+idna==3.10
     # via requests
-importlib-metadata==8.0.0
+importlib-metadata==8.5.0
     # via flask
 itsdangerous==2.2.0
     # via flask
 jinja2==3.1.4
     # via flask
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   jinja2
     #   werkzeug
@@ -38,33 +38,35 @@ psutil==5.9.8
     # via flask-shopify-utils (pyproject.toml)
 pyactiveresource==2.2.2
     # via shopifyapi
-pyjwt==2.8.0
+pyjwt==2.9.0
     # via
     #   flask-shopify-utils (pyproject.toml)
     #   shopifyapi
-pytz==2024.1
+pytz==2024.2
     # via flask-shopify-utils (pyproject.toml)
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via shopifyapi
 requests==2.32.3
     # via flask-shopify-utils (pyproject.toml)
-sgqlc==16.3
+sgqlc==16.4
     # via flask-shopify-utils (pyproject.toml)
-shopifyapi==12.6.0
+shopifyapi==12.7.0
     # via flask-shopify-utils (pyproject.toml)
-simplejson==3.19.2
+simplejson==3.19.3
     # via flask-shopify-utils (pyproject.toml)
 six==1.16.0
     # via
     #   pyactiveresource
     #   shopifyapi
-sqlalchemy==2.0.31
+sqlalchemy==2.0.36
     # via flask-sqlalchemy
 typing-extensions==4.12.2
-    # via sqlalchemy
-urllib3==2.2.2
+    # via
+    #   graphql-core
+    #   sqlalchemy
+urllib3==2.2.3
     # via requests
-werkzeug==3.0.3
+werkzeug==3.1.3
     # via flask
-zipp==3.19.2
+zipp==3.21.0
     # via importlib-metadata

@@ -16,10 +16,11 @@ import {useDefault} from "./stores/index"
 import {useRoute, useRouter} from "vue-router"
 
 const $http = inject('$http')
+const store = useDefault()
 const change = ref(false)
 const title = ref('Example')
 const full_width = ref(false)
-const {getApi, errorCallback, showToast, redirectRemote} = useDefault()
+const {getApi, errorCallback, showToast, redirectRemote} = store
 const route = useRoute()
 const router = useRouter()
 

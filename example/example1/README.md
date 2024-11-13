@@ -8,7 +8,7 @@ The project is follow the [Shopify App Structure](https://shopify.dev/docs/apps/
 ### Environment
 
 - OS: MacOX / Linux
-- Python: >= 3.8
+- Python: >= 3.9
 - VueJS: 3+
 
 ### Installation

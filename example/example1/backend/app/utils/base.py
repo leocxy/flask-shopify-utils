@@ -85,7 +85,8 @@ class BasicHelper:
             self._api_request.mount('https://', initial_restful_adapter())
         return self._api_request
 
-    def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json'):
+    def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Tuple[
+        bool, Optional[str or dict]]:
         op = Operation(shopify_schema.mutation_type, 'UpdateCodeMeta')
         mutation = op.metafields_set(metafields=[dict(
             owner_id=owner_id,
@@ -98,9 +99,9 @@ class BasicHelper:
         mutation.metafields.id()
         res = self.gql.fetch_data(op)['metafieldsSet']
         if len(res['userErrors']) > 0:
-            msg = dumps(res['userErrors'])
-            self.logger.error('UpdateMetaError: %s', msg)
-            return False, res['userErrors']
+            msg = 'UpdateMeta Error: {}'.format(dumps(res['userErrors']))
+            self.logger.warning('UpdateMetaError: %s', msg)
+            return False, msg
         return True, res['metafields'][0]['id'].split('/')[-1]
 
 

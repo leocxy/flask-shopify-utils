@@ -17,7 +17,7 @@ from functools import wraps
 from app.schemas.shopify import shopify as shopify_schema
 from app.utils.base import BasicHelper
 
-webhook_bp = Blueprint('worker_bp', __name__, cli_group='webhook')
+webhook_cli = Blueprint('webhook_cli', __name__, cli_group='webhook')
 
 
 def check_store_id(func):
@@ -31,7 +31,7 @@ def check_store_id(func):
     return decorator
 
 
-@webhook_bp.cli.command('list')
+@webhook_cli.cli.command('list')
 @option('-s', '--store_id', help='Store ID', default=1)
 @check_store_id
 def webhook_list(helper):
@@ -58,7 +58,7 @@ def webhook_list(helper):
     print(table)
 
 
-@webhook_bp.cli.command('revoke')
+@webhook_cli.cli.command('revoke')
 @option('-s', '--store_id', help='Store ID', default=1)
 @check_store_id
 def webhook_revoke(helper):
@@ -101,13 +101,14 @@ def webhook_revoke(helper):
     print(table)
 
 
-@webhook_bp.cli.command('init')
+@webhook_cli.cli.command('init')
 @option('-s', '--store_id', help='Store ID', default=1)
 @check_store_id
 def webhook_register(helper):
     """ Register webhooks """
     topics = dict()
-    topics['APP_UNINSTALLED'] = url_for('shopify_gdpr.shop_redact', _scheme='https', _external=True)
+    common = dict(_scheme='https', _external=True)
+    topics['APP_UNINSTALLED'] = url_for('shopify.shop_redact', **common)
     table = PrettyTable(field_names=['Topic', 'CallbackUrl', 'Message'])
     op = Operation(shopify_schema.mutation_type, 'RegisterWebhooks')
     for topic in topics:
