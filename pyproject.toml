@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "flask-shopify-utils"
 description = "A Flask extension for Shopify app development"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 keywords = ["Flask", "Extension", "Flask Extension", "Shopify", "Shopify-SDK", "SDK"]
 authors = [
     {email = "leo.cxy88@gmail.com"},
@@ -19,6 +19,7 @@ maintainers = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: Flask"

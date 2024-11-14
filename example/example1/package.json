@@ -17,7 +17,7 @@
     "cross-env": "^7.0.3"
   },
   "engines": {
-    "node": ">=18",
+    "node": ">=20",
     "yarn": "1.x"
   },
   "engineStrict": true,
