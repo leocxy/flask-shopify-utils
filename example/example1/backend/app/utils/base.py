@@ -20,7 +20,9 @@ from abc import abstractmethod, ABC
 # custom modules
 from app import app, db
 from app.models.shopify import DiscountCode
-from app.schemas.shopify import shopify as shopify_schema
+from app.models.shopify import DiscountCode
+from app.schemas.mutation import update_meta, create_discount_code, update_discount_code, \
+    delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount
 
 
 class BasicHelper:
@@ -87,16 +89,7 @@ class BasicHelper:
 
     def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Tuple[
         bool, Optional[str or dict]]:
-        op = Operation(shopify_schema.mutation_type, 'UpdateCodeMeta')
-        mutation = op.metafields_set(metafields=[dict(
-            owner_id=owner_id,
-            namespace=namespace,
-            key=key,
-            type=value_type,
-            value=value
-        )])
-        mutation.user_errors()
-        mutation.metafields.id()
+        op = update_meta(owner_id, value, namespace, key, value_type)
         res = self.gql.fetch_data(op)['metafieldsSet']
         if len(res['userErrors']) > 0:
             msg = 'UpdateMeta Error: {}'.format(dumps(res['userErrors']))
@@ -268,12 +261,9 @@ class DiscountHelper(ABC, BasicHelper):
 
     def _create_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         metas = self.format_meta_data(data)
-        op = Operation(shopify_schema.mutation_type, 'CreateCode')
         input_data = self.format_discount_code_input_data(record)
         input_data['metafields'] = metas
-        mutation = op.discount_code_app_create(code_app_discount=input_data)
-        mutation.user_errors()
-        mutation.code_app_discount.discount_id()
+        op = create_discount_code(input_data)
         res = self.gql.fetch_data(op)['discountCodeAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -285,36 +275,21 @@ class DiscountHelper(ABC, BasicHelper):
         return True, None, self.record_to_dict(record)
 
     def _update_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
-        op = Operation(shopify_schema.mutation_type, 'UpdateCode')
+        metas = self.format_meta_data(data)
         owner_id = 'gid://shopify/DiscountCodeNode/{}'.format(record.code_id)
         input_data = self.format_discount_code_input_data(record)
-        mutation = op.discount_code_app_update(
-            code_app_discount=input_data,
-            id=owner_id
-        )
-        mutation.user_errors()
+        input_data['metafields'] = metas
+        op = update_discount_code(owner_id, input_data)
         res = self.gql.fetch_data(op)['discountCodeAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('CodeUpdateError: %s', msg)
             return False, 'Update discount code failed!', res['userErrors']
-        # Update Meta
-        metas = self.format_meta_data(data, owner_id)
-        op = Operation(shopify_schema.mutation_type, 'UpdateMeta')
-        mutation = op.metafields_set(metafields=metas)
-        mutation.user_errors()
-        res = self.gql.fetch_data(op)['metafieldsSet']
-        if len(res['userErrors']) > 0:
-            msg = dumps(res['userErrors'])
-            self.logger.error('UpdateMetaError: %s', msg)
-            return False, 'Update discount code failed!', res['userErrors']
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
     def _delete_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Optional[dict or list]]:
-        op = Operation(shopify_schema.mutation_type, 'DeleteCode')
-        mutation = op.discount_code_delete(id='gid://shopify/DiscountCodeNode/{}'.format(record.code_id))
-        mutation.user_errors()
+        op = delete_discount_code(record.code_id)
         res = self.gql.fetch_data(op)['discountCodeDelete']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -327,12 +302,9 @@ class DiscountHelper(ABC, BasicHelper):
     def _create_auto_code(self, record: DiscountCode, data: dict) -> Tuple[
         bool, Optional[str], Optional[dict or list]]:
         metas = self.format_meta_data(data)
-        op = Operation(shopify_schema.mutation_type, 'CreateAutoCode')
         input_data = self.format_auto_discount_code_input_data(record)
         input_data['metafields'] = metas
-        mutation = op.discount_automatic_app_create(automatic_app_discount=input_data)
-        mutation.user_errors()
-        mutation.automatic_app_discount.discount_id()
+        op = create_auto_discount(data)
         res = self.gql.fetch_data(op)['discountAutomaticAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -345,36 +317,20 @@ class DiscountHelper(ABC, BasicHelper):
 
     def _update_auto_code(self, record: DiscountCode, data: dict) -> Tuple[
         bool, Optional[str], Optional[dict or list]]:
-        op = Operation(shopify_schema.mutation_type, 'UpdateAutoCode')
         owner_id = 'gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id)
         input_data = self.format_auto_discount_code_input_data(record)
-        mutation = op.discount_automatic_app_update(
-            automatic_app_discount=input_data,
-            id=owner_id
-        )
-        mutation.user_errors()
+        input_data['metafields'] = self.format_meta_data(data)
+        op = update_auto_discount(owner_id, input_data)
         res = self.gql.fetch_data(op)['discountAutomaticAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('AutomaticCodeUpdateError: %s', msg)
             return False, 'Update automatic discount code failed!', res['userErrors']
-        # Update Meta
-        metas = self.format_meta_data(data, owner_id)
-        op = Operation(shopify_schema.mutation_type, 'UpdateMeta')
-        mutation = op.metafields_set(metafields=metas)
-        mutation.user_errors()
-        res = self.gql.fetch_data(op)['metafieldsSet']
-        if len(res['userErrors']) > 0:
-            msg = dumps(res['userErrors'])
-            self.logger.error('UpdateMetaError: %s', msg)
-            return False, 'Update automatic discount code failed!', res['userErrors']
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
     def _delete_auto_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Optional[dict or list]]:
-        op = Operation(shopify_schema.mutation_type, 'DeleteCode')
-        mutation = op.discount_automatic_delete(id='gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id))
-        mutation.user_errors()
+        op = delete_auto_discount(record.code_id)
         res = self.gql.fetch_data(op)['discountAutomaticDelete']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])

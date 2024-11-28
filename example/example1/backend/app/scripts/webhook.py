@@ -8,14 +8,14 @@
 """
 from flask import Blueprint, url_for
 from click import option
-from sgqlc.operation import Operation
 from prettytable import PrettyTable
 from simplejson import dumps
 from functools import wraps
 # Custom Modules
 # app.schemas.shopify should generate by `flask generate_schema`
-from app.schemas.shopify import shopify as shopify_schema
 from app.utils.base import BasicHelper
+from app.schemas.query import query_webhooks
+from app.schemas.mutation import revoke_webhooks, create_webhooks
 
 webhook_cli = Blueprint('webhook_cli', __name__, cli_group='webhook')
 
@@ -39,16 +39,9 @@ def webhook_list(helper):
     table = PrettyTable(field_names=['WebhookID', 'Topic', 'CallbackUrl'])
     cursor = None
     while True:
-        op = Operation(shopify_schema.query_type)
-        sub = op.webhook_subscriptions(first=20, after=cursor)
-        sub.edges.cursor()
-        sub.page_info.has_next_page()
-        sub.edges.node.id()
-        sub.edges.node.endpoint().__as__(shopify_schema.WebhookHttpEndpoint).callback_url()
-        sub.edges.node.topic()
+        op = query_webhooks(cursor)
         res = helper.gql.fetch_data(op)['webhookSubscriptions']
-        for node in res['edges']:
-            node = node['node']
+        for node in res['nodes']:
             table.add_row([node['id'], node['topic'], node['endpoint']['callbackUrl']])
         if res['pageInfo']['hasNextPage']:
             cursor = res['edges'][-1]['cursor']
@@ -67,15 +60,9 @@ def webhook_revoke(helper):
     webhooks = {}
     cursor = None
     while True:
-        op = Operation(shopify_schema.query_type)
-        query = op.webhook_subscriptions(first=20, after=cursor)
-        query.edges.cursor()
-        query.edges.node.id()
-        query.edges.node.topic()
-        query.page_info.has_next_page()
+        op = query_webhooks(cursor)
         res = helper.gql.fetch_data(op)['webhookSubscriptions']
-        for node in res['edges']:
-            node = node['node']
+        for node in res['nodes']:
             alias = 'ID{}'.format(node['id'].split('/')[-1])
             webhooks[alias] = dict(id=node['id'], topic=node['topic'])
         if res['pageInfo']['hasNextPage']:
@@ -84,10 +71,9 @@ def webhook_revoke(helper):
             break
     if len(webhooks.keys()) == 0:
         return print(f'StoreID[{helper.store.id}] does not registered any webhooks')
-    op = Operation(shopify_schema.mutation_type, 'RevokeWebhooks')
-    for alias in webhooks:
-        mutation = op.webhook_subscription_delete(id=webhooks[alias]['id'], __alias__=alias)
-        mutation.user_errors()
+
+    # revoke webhook
+    op = revoke_webhooks(webhooks)
     res = helper.gql.fetch_data(op)
     for alias in webhooks:
         if alias not in res or len(res[alias]['userErrors']) != 0:
@@ -110,12 +96,8 @@ def webhook_register(helper):
     common = dict(_scheme='https', _external=True)
     topics['APP_UNINSTALLED'] = url_for('shopify.shop_redact', **common)
     table = PrettyTable(field_names=['Topic', 'CallbackUrl', 'Message'])
-    op = Operation(shopify_schema.mutation_type, 'RegisterWebhooks')
-    for topic in topics:
-        mutation = op.webhook_subscription_create(topic=topic, webhook_subscription=dict(
-            callback_url=topics[topic]
-        ), __alias__=topic)
-        mutation.user_errors()
+
+    op = create_webhooks(topics)
     res = helper.gql.fetch_data(op)
     for topic in topics:
         if topic not in res or len(res[topic]['userErrors']) != 0:
