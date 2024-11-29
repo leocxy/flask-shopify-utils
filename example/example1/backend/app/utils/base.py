@@ -12,14 +12,12 @@ from logging.handlers import RotatingFileHandler
 from functools import wraps
 # Request validation
 from simplejson import dumps
-from sgqlc.operation import Operation
 from flask_shopify_utils.utils import GraphQLClient
 from flask_shopify_utils.model import Store
 from typing import Tuple, Optional
 from abc import abstractmethod, ABC
 # custom modules
 from app import app, db
-from app.models.shopify import DiscountCode
 from app.models.shopify import DiscountCode
 from app.schemas.mutation import update_meta, create_discount_code, update_discount_code, \
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount
@@ -259,6 +257,15 @@ class DiscountHelper(ABC, BasicHelper):
             return self._delete_code(record)
         return self._delete_auto_code(record)
 
+    def update_metas(self, data: dict, owner_id: str) -> Tuple[bool, Optional[str], Optional[list]]:
+        op = update_multiple_meta(self.format_meta_data(data, owner_id))
+        res = self.gql.fetch_data(op)['metafieldsSet']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('MetaUpdateError: %s', msg)
+            return False, 'Update code metas failed!', res['userErrors']
+        return True, None, None
+
     def _create_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         metas = self.format_meta_data(data)
         input_data = self.format_discount_code_input_data(record)
@@ -275,16 +282,19 @@ class DiscountHelper(ABC, BasicHelper):
         return True, None, self.record_to_dict(record)
 
     def _update_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
-        metas = self.format_meta_data(data)
         owner_id = 'gid://shopify/DiscountCodeNode/{}'.format(record.code_id)
         input_data = self.format_discount_code_input_data(record)
-        input_data['metafields'] = metas
         op = update_discount_code(owner_id, input_data)
         res = self.gql.fetch_data(op)['discountCodeAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('CodeUpdateError: %s', msg)
             return False, 'Update discount code failed!', res['userErrors']
+
+        # meta update
+        rs, msg, err = self.update_metas(data, owner_id)
+        if not rs:
+            return False, msg, err
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
@@ -304,7 +314,7 @@ class DiscountHelper(ABC, BasicHelper):
         metas = self.format_meta_data(data)
         input_data = self.format_auto_discount_code_input_data(record)
         input_data['metafields'] = metas
-        op = create_auto_discount(data)
+        op = create_auto_discount(input_data)
         res = self.gql.fetch_data(op)['discountAutomaticAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -319,13 +329,17 @@ class DiscountHelper(ABC, BasicHelper):
         bool, Optional[str], Optional[dict or list]]:
         owner_id = 'gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id)
         input_data = self.format_auto_discount_code_input_data(record)
-        input_data['metafields'] = self.format_meta_data(data)
         op = update_auto_discount(owner_id, input_data)
         res = self.gql.fetch_data(op)['discountAutomaticAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('AutomaticCodeUpdateError: %s', msg)
             return False, 'Update automatic discount code failed!', res['userErrors']
+
+        # meta update
+        rs, msg, err = self.update_metas(data, owner_id)
+        if not rs:
+            return False, msg, err
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
