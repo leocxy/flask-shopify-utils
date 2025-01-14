@@ -42,7 +42,7 @@ def webhook_list(helper):
         op = query_webhooks(cursor)
         res = helper.gql.fetch_data(op)['webhookSubscriptions']
         for node in res['nodes']:
-            table.add_row([node['id'], node['topic'], node['endpoint']['callbackUrl']])
+            table.add_row([node['id'], node['topic'], node['callbackUrl']])
         if res['pageInfo']['hasNextPage']:
             cursor = res['edges'][-1]['cursor']
         else:
@@ -94,7 +94,7 @@ def webhook_register(helper):
     """ Register webhooks """
     topics = dict()
     common = dict(_scheme='https', _external=True)
-    topics['APP_UNINSTALLED'] = url_for('shopify.shop_redact', **common)
+    topics['APP_UNINSTALLED'] = url_for('shopify_gdpr.shop_redact', **common)
     table = PrettyTable(field_names=['Topic', 'CallbackUrl', 'Message'])
 
     op = create_webhooks(topics)
