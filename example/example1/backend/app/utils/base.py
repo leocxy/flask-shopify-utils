@@ -20,7 +20,8 @@ from abc import abstractmethod, ABC
 from app import app, db
 from app.models.shopify import DiscountCode
 from app.schemas.mutation import update_meta, create_discount_code, update_discount_code, \
-    delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount
+    delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, \
+    update_multiple_meta
 
 
 class BasicHelper:
