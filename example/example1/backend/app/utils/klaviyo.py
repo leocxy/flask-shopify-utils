@@ -8,7 +8,7 @@
 """
 from os import getenv, path
 from requests import Session
-from typing import Tuple, TypeVar
+from typing import Tuple, Optional
 from simplejson import dumps
 from logging import Formatter, Logger
 from logging.handlers import RotatingFileHandler
@@ -16,8 +16,6 @@ from time import sleep
 # custom modules
 from app import app
 from app.utils.base import fn_debug
-
-MSG_TYPE = TypeVar("MSG_TYPE", str, None)
 
 
 class KlaviyoHelper(object):
@@ -44,7 +42,7 @@ class KlaviyoHelper(object):
         self.logger.addHandler(handler)
         # Custom variables
         self.token = token
-        self.version = '2023-12-15'
+        self.version = '2024-05-15'
         self.client = Session()
         self.client.headers.update({
             "Authorization": "Klaviyo-API-Key {}".format(token),
@@ -69,7 +67,7 @@ class KlaviyoHelper(object):
         return True
 
     @fn_debug
-    def search_profile(self, email: str, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def search_profile(self, email: str, attempt: int = 3) -> Tuple[bool, Optional[str]]:
         # https://developers.klaviyo.com/en/reference/get_profiles
         func = self.search_profile.__name__
         params = {'page[size]': 1, 'filter': f'equals(email,"{email}")'}
@@ -101,7 +99,7 @@ class KlaviyoHelper(object):
         return True
 
     @fn_debug
-    def create_profile(self, params: dict, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def create_profile(self, params: dict, attempt: int = 3) -> Tuple[bool, Optional[str]]:
         # https://developers.klaviyo.com/en/reference/create_profile
         func = self.create_profile.__name__
         res = self.client.post(f'{self._url}/profiles', json=params)
@@ -114,7 +112,8 @@ class KlaviyoHelper(object):
         return True, res.json()
 
     @fn_debug
-    def subscribe_profile(self, unique_id: str, list_id: str, email: str, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def subscribe_profile(self, unique_id: str, list_id: str, email: str, attempt: int = 3) -> Tuple[
+        bool, Optional[str]]:
         # https://developers.klaviyo.com/en/reference/subscribe_profiles
         func = self.subscribe_profile.__name__
         params = dict(data=dict(
@@ -139,7 +138,7 @@ class KlaviyoHelper(object):
         return True, None
 
     @fn_debug
-    def suppress_profile(self, email: str, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def suppress_profile(self, email: str, attempt: int = 3) -> Tuple[bool, Optional[str]]:
         """ Not accept marketing email """
         # https://developers.klaviyo.com/en/reference/suppress_profiles
         func = self.suppress_profile.__name__
@@ -165,7 +164,7 @@ class KlaviyoHelper(object):
         return True, None
 
     @fn_debug
-    def unsuppress_profile(self, email: str, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def unsuppress_profile(self, email: str, attempt: int = 3) -> Tuple[bool, Optional[str]]:
         """ Accept marketing email """
         # https://developers.klaviyo.com/en/reference/unsuppress_profiles
         func = self.unsuppress_profile.__name__
@@ -191,7 +190,7 @@ class KlaviyoHelper(object):
         return True, None
 
     @fn_debug
-    def add_profile_to_list(self, unique_id: str, list_id: str, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def add_profile_to_list(self, unique_id: str, list_id: str, attempt: int = 3) -> Tuple[bool, Optional[str]]:
         # https://developers.klaviyo.com/en/reference/create_list_relationships
         func = self.add_profile_to_list.__name__
         params = dict(data=[dict(
@@ -205,10 +204,10 @@ class KlaviyoHelper(object):
                 self.logger.warning('Func: {}, Retry: {}'.format(func, attempt))
                 return self.add_profile_to_list(unique_id, list_id, attempt - 1)
             return False, res.text
-        return True, res.json()
+        return True, res.text
 
     @fn_debug
-    def get_profile_lists(self, unique_id: str, attempt: int = 3) -> Tuple[bool, MSG_TYPE]:
+    def get_profile_lists(self, unique_id: str, attempt: int = 3) -> Tuple[bool, Optional[str]]:
         # https://developers.klaviyo.com/en/reference/get_profile_lists
         func = self.get_profile_lists.__name__
         res = self.client.get(f'{self._url}/profiles/{unique_id}/lists/')
