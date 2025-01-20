@@ -25,3 +25,20 @@ The project is follow the [Shopify App Structure](https://shopify.dev/docs/apps/
 >yarn shopify app env pull
 # then you can add the `backend` config to the `.env` file
 ```
+
+### Extensions
+
+Function APIs are versioned. 
+Updates are released quarterly and supported API versions are listed in the release notes. 
+You can update to a new version of a Function API by completing the following steps.
+
+1. Update the version of the API specified in your "shopify.extension.toml" file.
+2. [Generate the latest schema](https://shopify.dev/docs/apps/build/functions/input-output#generating-the-latest-schema).
+
+```shell
+# example1: generate the schema
+yarn app function schema --stdout --path=extensions/order-discount
+
+# example2: generate the schema to the file
+yarn app function schema --path=extensions/order-discount
+```
