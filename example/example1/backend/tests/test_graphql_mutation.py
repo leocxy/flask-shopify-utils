@@ -6,6 +6,7 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 28/11/2024 15:07:53
 """
+from types import FunctionType
 from app.schemas.mutation import update_meta, update_multiple_meta, create_discount_code, update_discount_code, \
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, create_webhooks, \
     revoke_webhooks
@@ -128,3 +129,22 @@ def test_revoke_webhooks():
         revoke_webhooks(data)
     except Exception as e:
         assert False, e
+
+
+###
+# Coverage check - make sure all functions are covered
+###
+COVERAGE_FUNCS = [name for name, obj in locals().items() if isinstance(obj, FunctionType) and name.startswith('test_')]
+def test_coverage_check() -> None:
+    from app.schemas import mutation as mutation_schema
+    funcs = []
+    for item in dir(mutation_schema):
+        if isinstance(getattr(mutation_schema, item), FunctionType):
+            fn = 'test_{}'.format(item)
+            if fn not in COVERAGE_FUNCS:
+                funcs.append(fn)
+
+    if len(funcs) == 0:
+        assert True, 'All functions are covered'
+    else:
+        assert False, 'Not covered functions: {}'.format(' , '.join(funcs))
