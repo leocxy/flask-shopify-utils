@@ -142,9 +142,9 @@ def test_coverage_check() -> None:
         if isinstance(getattr(mutation_schema, item), FunctionType):
             fn = 'test_{}'.format(item)
             if fn not in COVERAGE_FUNCS:
-                funcs.append(fn)
+                funcs.append(item)
 
     if len(funcs) == 0:
         assert True, 'All functions are covered'
     else:
-        assert False, 'Not covered functions: {}'.format(' , '.join(funcs))
+        assert False, 'Not covered functions: {}'.format(', '.join(funcs))
