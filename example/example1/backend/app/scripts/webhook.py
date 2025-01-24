@@ -18,6 +18,7 @@ from app.schemas.query import query_webhooks
 from app.schemas.mutation import revoke_webhooks, create_webhooks
 
 webhook_cli = Blueprint('webhook_cli', __name__, cli_group='webhook')
+webhook_cli.cli.short_help = 'Webhook CLIs'
 
 
 def check_store_id(func):
