@@ -139,15 +139,70 @@ class DiscountHelper(ABC, BasicHelper):
     @staticmethod
     @abstractmethod
     def get_schema() -> dict:
+        """
+        Schema example
+
+        date_regex = '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+        return dict(
+            type=dict(type='string', required=True, allowed=['auto']),
+            code=dict(type='string', required=True, nullable=True, maxlength=32),
+            title=dict(type='string', required=True, nullable=True, maxlength=64),
+            message=dict(type='string', required=True, nullable=True, maxlength=255),
+            combine_with_product=dict(type='boolean', required=True),
+            combine_with_order=dict(type='boolean', required=True),
+            combine_with_shipping=dict(type='boolean', required=True),
+            start_date=dict(type='string', required=True, regex=date_regex),
+            enable_end_date=dict(type='boolean', required=True),
+            end_date=dict(type='string', required=True, regex=date_regex, nullable=True),
+            # extra add here
+        )
+        """
         pass
 
     @classmethod
     @abstractmethod
     def format_record_data(cls, data: dict) -> Tuple[dict, Optional[dict]]:
+        """
+        Example
+
+        code_type = DiscountCode.convert_code_type(data['type'])
+        return dict(
+            code_type=code_type,
+            code_name=data['code'] if code_type == 0 else data['title'],
+            message=data.get('message', None),
+            discount_method=None,
+            discount_value=data.get('discount_value', None),
+            requirement_type=None,
+            requirement_value=None,
+            customer_eligibility=None,
+            one_use_per_customer=None,
+            limit_usage=None,
+            maximum_usage=None,
+            combine_with_order=1 if data['combine_with_order'] else 0,
+            combine_with_product=1 if data['combine_with_product'] else 0,
+            combine_with_shipping=1 if data['combine_with_shipping'] else 0,
+            start_date=datetime.strptime(data['start_date'], '%Y-%m-%dT%H:%M:%S'),
+            end_date=datetime.strptime(data['end_date'], '%Y-%m-%dT%H:%M:%S') if data['enable_end_date'] else None,
+        ), None
+        """
         pass
 
     @abstractmethod
     def format_meta_data(self, data: dict, owner_id: str = None) -> list:
+        """
+        Example
+
+        return [dict(
+            owner_id=owner_id,
+            namespace=self._ns,
+            key=self._key,
+            type='json',
+            value=dumps(dict(
+                message=data['message'],
+                # extra add here
+            ))
+        )]
+        """
         pass
 
     @classmethod
@@ -174,6 +229,7 @@ class DiscountHelper(ABC, BasicHelper):
         if record.end_date:
             output['enable_end_date'] = True
             output['end_date'] = record.end_date.strftime('%Y-%m-%dT%H:%M:%S')
+        # load extra data
         output.update(record.get_extra())
         return output
 
