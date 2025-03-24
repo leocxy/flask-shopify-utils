@@ -94,8 +94,6 @@ def revoke_webhooks(data: dict) -> Operation:
 def create_webhooks(data: dict) -> Operation:
     op = Operation(shopify_schema.mutation_type, 'CreateWebhooks')
     for topic in data.keys():
-        mutation = op.webhook_subscription_create(topic=topic, webhook_subscription=dict(
-            callback_url=data[topic]
-        ), __alias__=topic)
+        mutation = op.webhook_subscription_create(topic=topic, webhook_subscription=data[topic], __alias__=topic)
         mutation.user_errors()
     return op

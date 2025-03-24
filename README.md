@@ -10,6 +10,14 @@ The utils for Flask Application that build for Shopify Custom App
 $pip install -U flask-shopify-utils
 ```
 
+## Get the sample code to start
+
+After install the "flask-shopify-utils", you should able to get the sample code by running the following command.
+ 
+```shell
+$lazy-dog
+```
+
 ---
 
 ## Example / How to ...

@@ -37,7 +37,8 @@ class BasicHelper:
         self.logger = Logger('BasicHelper')
         handler = RotatingFileHandler(
             path.join(app.config.get('TEMPORARY_PATH'), f'{log_name}.log'),
-            maxBytes=5120000,
+            # 10 MB
+            maxBytes=10240000,
             backupCount=5
         )
         handler.setFormatter(Formatter('[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'))
@@ -214,7 +215,10 @@ class DiscountHelper(ABC, BasicHelper):
             code=None,
             title=None,
             message=record.message,
+            discount_method=None if record.discount_method is None else record.convert_discount_method(record.discount_method, True),
             discount_value=record.discount_value,
+            requirement_type=record.requirement_type,
+            requirement_value=record.requirement_value,
             combine_with_product=record.combine_with_product == 1,
             combine_with_order=record.combine_with_order == 1,
             combine_with_shipping=record.combine_with_shipping == 1,

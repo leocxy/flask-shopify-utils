@@ -40,8 +40,9 @@ def test_instance(initial):
     from flask_shopify_utils.model import Store
     with app.test_client() as client:
         with app.app_context():
-            # create table
-            db.create_all()
+            # create table the necessary table only
+            metadata = db.MetaData()
+            metadata.create_all(bind=db.engine, tables=[Store.__table__])
             record = Store(
                 key='test.myshopify.com',
                 domain='teststore.com',

@@ -30,7 +30,8 @@ dependencies = [
     "python-dotenv < 2.0.0",
     "prettytable < 4",
     "pymysql < 2",
-    "python-dateutil < 3"
+    "python-dateutil < 3",
+    "cryptography < 50"
 ]
 
 [project.optional-dependencies]

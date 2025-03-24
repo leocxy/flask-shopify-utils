@@ -38,6 +38,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.scripts]
+lazy-dog = "flask_shopify_utils.cli.main:copy_files"
+
 [project.optional-dependencies]
 dev = [
     "pytest < 9",

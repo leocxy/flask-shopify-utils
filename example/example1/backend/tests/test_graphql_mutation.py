@@ -116,7 +116,7 @@ def test_delete_auto_discount():
 def test_create_webhooks():
     try:
         data = dict()
-        data['APP_UNINSTALLED'] = 'http://127.0.0.1:500'
+        data['APP_UNINSTALLED'] = dict(callback_url='http://127.0.0.1:500')
         create_webhooks(data)
     except Exception as e:
         assert False, e
