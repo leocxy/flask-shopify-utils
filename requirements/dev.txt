@@ -12,7 +12,7 @@ build==1.2.1
     # via flask-shopify-utils (pyproject.toml)
 cerberus==1.3.7
     # via flask-shopify-utils (pyproject.toml)
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -28,7 +28,7 @@ flask==3.1.0
     #   flask-sqlalchemy
 flask-sqlalchemy==3.1.1
     # via flask-shopify-utils (pyproject.toml)
-graphql-core==3.2.5
+graphql-core==3.2.6
     # via sgqlc
 id==1.5.0
     # via twine
@@ -40,7 +40,7 @@ importlib-metadata==8.6.1
     #   flask
     #   keyring
     #   twine
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 itsdangerous==2.2.0
     # via flask
@@ -50,7 +50,7 @@ jaraco-context==6.0.1
     # via keyring
 jaraco-functools==4.1.0
     # via keyring
-jinja2==3.1.5
+jinja2==3.1.6
     # via flask
 keyring==25.6.0
     # via twine
@@ -66,7 +66,7 @@ more-itertools==10.6.0
     # via
     #   jaraco-classes
     #   jaraco-functools
-nh3==0.2.20
+nh3==0.2.21
     # via readme-renderer
 packaging==24.2
     # via
@@ -75,7 +75,7 @@ packaging==24.2
     #   twine
 pluggy==1.5.0
     # via pytest
-psutil==6.1.1
+psutil==7.0.0
     # via flask-shopify-utils (pyproject.toml)
 pyactiveresource==2.2.2
     # via shopifyapi
@@ -89,9 +89,9 @@ pyjwt==2.10.1
     #   shopifyapi
 pyproject-hooks==1.2.0
     # via build
-pytest==8.3.4
+pytest==8.3.5
     # via flask-shopify-utils (pyproject.toml)
-pytz==2024.2
+pytz==2025.2
     # via flask-shopify-utils (pyproject.toml)
 pyyaml==6.0.2
     # via shopifyapi
@@ -113,13 +113,13 @@ sgqlc==16.4
     # via flask-shopify-utils (pyproject.toml)
 shopifyapi==12.7.0
     # via flask-shopify-utils (pyproject.toml)
-simplejson==3.19.3
+simplejson==3.20.1
     # via flask-shopify-utils (pyproject.toml)
 six==1.17.0
     # via
     #   pyactiveresource
     #   shopifyapi
-sqlalchemy==2.0.37
+sqlalchemy==2.0.39
     # via flask-sqlalchemy
 tomli==2.2.1
     # via
@@ -127,7 +127,7 @@ tomli==2.2.1
     #   pytest
 twine==6.1.0
     # via flask-shopify-utils (pyproject.toml)
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via
     #   graphql-core
     #   rich
