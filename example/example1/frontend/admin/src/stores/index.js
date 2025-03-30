@@ -23,8 +23,10 @@ export const useDefault = defineStore("default", () => {
     const internal_endpoints = [
         {name: 'check', url: '/admin/check'},
         {name: 'test_jwt', url: '/admin/test_jwt'},
+        // extension endpoints
+        // {name: 'delivery', url: '/admin/delivery-customization'},
+        // {name: 'payment', url: '/admin/payment-customization'},
         // add more endpoints here
-        {name: 'product-discount', url: '/admin/product-discount'}
     ]
 
     const checkAppBridge = () => {

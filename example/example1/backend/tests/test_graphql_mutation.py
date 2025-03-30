@@ -9,7 +9,8 @@
 from types import FunctionType
 from app.schemas.mutation import update_meta, update_multiple_meta, create_discount_code, update_discount_code, \
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, create_webhooks, \
-    revoke_webhooks
+    revoke_webhooks, create_payment_customization, delete_payment_customization, update_payment_customization, \
+    create_delivery_customization, delete_delivery_customization, update_delivery_customization
 
 DISCOUNT_CODE_DATA = dict(
     code='test_code',
@@ -131,10 +132,72 @@ def test_revoke_webhooks():
         assert False, e
 
 
+def test_create_payment_customization() -> None:
+    try:
+        create_payment_customization(dict(
+            function_id='1234',
+            enabled=True,
+            title='title',
+            metafields=[]
+        ))
+    except Exception as e:
+        assert False, e
+
+
+def test_update_payment_customization() -> None:
+    try:
+        update_payment_customization('gid://shopify/PaymentCustomization/1234', dict(
+            enabled=False,
+            title='title'
+        ))
+    except Exception as e:
+        assert False, e
+
+
+def test_delete_payment_customization() -> None:
+    try:
+        delete_delivery_customization('gid://shopify/PaymentCustomization/1234')
+    except Exception as e:
+        assert False, e
+
+
+def test_create_delivery_customization() -> None:
+    try:
+        create_delivery_customization(dict(
+            function_id='1234',
+            enabled=True,
+            title='title',
+            metafields=[]
+        ))
+    except Exception as e:
+        assert False, e
+
+
+def test_update_delivery_customization() -> None:
+    try:
+        update_delivery_customization('gid://shopify/DeliveryCustomization/1234', dict(
+            enabled=False,
+            title='title'
+        ))
+    except Exception as e:
+        assert False, e
+
+
+def test_delete_delivery_customization() -> None:
+    gid = 'gid://shopify/DeliveryCustomization/1234'
+    try:
+        delete_delivery_customization(gid)
+    except Exception as e:
+        assert False, e
+
+
 ###
 # Coverage check - make sure all functions are covered
 ###
-COVERAGE_FUNCS = [name for name, obj in locals().items() if isinstance(obj, FunctionType) and name.startswith('test_')]
+COVERAGE_FUNCS = [name for name, obj in locals().items() if
+                  isinstance(obj, FunctionType) and name.startswith('test_')]
+
+
 def test_coverage_check() -> None:
     from app.schemas import mutation as mutation_schema
     funcs = []

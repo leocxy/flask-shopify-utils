@@ -20,3 +20,21 @@ def query_webhooks(cursor: str = None) -> Operation:
     query.nodes.callback_url()
     query.nodes.topic()
     return op
+
+
+def query_delivery_customization(gid: str, namespace: str, key: str) -> Operation:
+    op = Operation(shopify_schema.query_type, 'QueryDeliveryCustomization')
+    query = op.delivery_customization(id=gid)
+    query.title()
+    query.enabled()
+    query.metafield(namespace=namespace, key=key).json_value()
+    return op
+
+
+def query_payment_customization(gid: str, namespace: str, key: str) -> Operation:
+    op = Operation(shopify_schema.query_type, 'QueryPaymentCustomization')
+    query = op.payment_customization(id=gid)
+    query.title()
+    query.enabled()
+    query.metafield(namespace=namespace, key=key).json_value()
+    return op

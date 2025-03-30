@@ -19,9 +19,12 @@ from abc import abstractmethod, ABC
 # custom modules
 from app import app, db
 from app.models.shopify import DiscountCode
+from app.schemas.query import query_delivery_customization, query_payment_customization
 from app.schemas.mutation import update_meta, create_discount_code, update_discount_code, \
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, \
-    update_multiple_meta
+    update_multiple_meta, create_delivery_customization, update_delivery_customization, \
+    delete_delivery_customization, create_payment_customization, update_payment_customization, \
+    delete_payment_customization
 
 
 class BasicHelper:
@@ -115,6 +118,7 @@ def fn_debug(func):
 
 
 class DiscountHelper(ABC, BasicHelper):
+    """ Here is the abstract class for DiscountCode """
 
     def __init__(self, store_id: int = 1, log_name: str = 'discount_helper', func_name: str = None):
         super(DiscountHelper, self).__init__(store_id, log_name)
@@ -215,7 +219,8 @@ class DiscountHelper(ABC, BasicHelper):
             code=None,
             title=None,
             message=record.message,
-            discount_method=None if record.discount_method is None else record.convert_discount_method(record.discount_method, True),
+            discount_method=None if record.discount_method is None else record.convert_discount_method(
+                record.discount_method, True),
             discount_value=record.discount_value,
             requirement_type=record.requirement_type,
             requirement_value=record.requirement_value,
@@ -413,4 +418,221 @@ class DiscountHelper(ABC, BasicHelper):
             return False, 'Delete automatic discount code failed!', res['userErrors']
         db.session.delete(record)
         db.session.commit()
+        return True, None, None
+
+
+class CustomizationHelper(ABC, BasicHelper):
+    """ Here is the abstract class for Customization function """
+
+    def __init__(self, store_id: int = 1, log_name: str = 'customization', func_name: str = None) -> None:
+        """ this method should be override by the subclass """
+        super(CustomizationHelper, self).__init__(store_id, log_name)
+        self.func_name = func_name if func_name else 'SHOPIFY_{}_ID'.format(log_name.upper())
+        self._func_id = getenv(self.func_name, None)
+
+        # it should be 'payment or 'delivery'
+        self.customization_type = 'payment'
+
+        # meta field
+        self._ns = '$app:{}-customization'.format(self.customization_type)
+        self._key = 'config'
+        # self._variables_key = 'variables'
+
+    @property
+    def func_id(self) -> str:
+        if self._func_id is None:
+            raise Exception(f'Can`t find the function[{self.func_name}] from the environment variable!')
+        return self._func_id
+
+    @staticmethod
+    @abstractmethod
+    def get_schema() -> dict:
+        """
+        Schema example
+
+        return dict(
+            id=dict(type='integer', required=False, nullable=True),
+            title=dict(type='string', required=True),
+            enabled=dict(type='boolean', required=True),
+            # extra data ...
+        )
+        """
+
+    @abstractmethod
+    def format_metas(self, data: dict, owner_id: str = None) -> list:
+        """
+        Example
+
+        return [dict(
+            owner_id=owner_id,
+            namespace=self._ns,
+            key=self._key,
+            type='json',
+            value=dumps(data),
+        )]
+        """
+
+    def edit(self, record_id: int) -> Tuple[bool, Optional[dict or str]]:
+        """ dynamic call the method based on the customization type """
+        fn = getattr(self, f'{self.customization_type}_edit')
+        return fn(record_id)
+
+    def create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+        """ dynamic call the method based on the customization type """
+        fn = getattr(self, f'{self.customization_type}_create')
+        return fn(data)
+
+    def update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+        """ dynamic call the method based on the customization type """
+        fn = getattr(self, f'{self.customization_type}_update')
+        return fn(record_id, data)
+
+    def delete(self, record_id: int) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+        """ dynamic call the method based on the customization type """
+        fn = getattr(self, f'{self.customization_type}_delete')
+        return fn(record_id)
+
+    def delivery_edit(self, record_id: int) -> Tuple[bool, Optional[dict or str]]:
+        gid = f'gid://shopify/DeliveryCustomization/{record_id}'
+        op = query_delivery_customization(gid, self._ns, self._key)
+        res = self.gql.fetch_data(op)['deliveryCustomization']
+        self.logger.info('QueryDeliveryCustomizationSuccess: %s', dumps(res))
+        if not res:
+            return False, 'Record not found!'
+        result = dict(
+            id=record_id,
+            enabled=res['enabled'],
+            title=res['title']
+        )
+        if meta := res['metafield']:
+            result.update(meta['jsonValue'])
+        return True, result
+
+    def delivery_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[list or dict]]:
+        metas = self.format_metas(data)
+        op = create_delivery_customization(dict(
+            function_id=self.func_id,
+            enabled=data['enabled'],
+            title=data['title'],
+            metafields=metas
+        ))
+        res = self.gql.fetch_data(op)['deliveryCustomizationCreate']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('CreateDeliveryCustomizationError: %s', msg)
+            return False, msg, res['userErrors']
+        self.logger.info('CreateDeliveryCustomizationSuccess: %s', dumps(res))
+        return True, None, dict(
+            id=int(res['deliveryCustomization']['id'].split('/')[-1]),
+            title=data['title'],
+            enabled=data['enabled'],
+        )
+
+    def delivery_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or str]]:
+        gid = f'gid://shopify/DeliveryCustomization/{record_id}'
+        op = update_delivery_customization(gid, dict(
+            enabled=data['enabled'],
+            title=data['title'],
+        ))
+        res = self.gql.fetch_data(op)['deliveryCustomizationUpdate']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('UpdateDeliveryCustomizationError: %s', msg)
+            return False, msg, res['userErrors']
+        self.logger.info('UpdateDeliveryCustomizationSuccess: %s', dumps(res))
+        # Update Meta
+        metas = self.format_metas(data, gid)
+        op = update_multiple_meta(metas)
+        res = self.gql.fetch_data(op)['metafieldsSet']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('UpdateDeliveryCustomizationMetaError: %s', msg)
+            return False, msg, res['userErrors']
+        return True, None, dict(
+            id=record_id,
+            enabled=data['enabled'],
+            title=data['title']
+        )
+
+    def delivery_delete(self, record_id: int) -> Tuple[bool, Optional[str], Optional[list]]:
+        gid = f'gid://shopify/DeliveryCustomization/{record_id}'
+        op = delete_delivery_customization(gid)
+        res = self.gql.fetch_data(op)['deliveryCustomizationDelete']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('DeleteDeliveryCustomizationError: %s', msg)
+            return False, msg, res['userErrors']
+        self.logger.info('DeleteDeliveryCustomizationSuccess: %s', record_id)
+        return True, None, None
+
+    def payment_edit(self, record_id: int) -> Tuple[bool, Optional[dict or str]]:
+        gid = f'gid://shopify/PaymentCustomization/{record_id}'
+        op = query_payment_customization(gid, self._ns, self._key)
+        res = self.gql.fetch_data(op)['paymentCustomization']
+        self.logger.info('QueryPaymentCustomizationSuccess: %s', dumps(res))
+        if not res:
+            return False, 'Record not found!'
+        result = dict(
+            id=record_id,
+            enabled=res['enabled'],
+            title=res['title']
+        )
+        if meta := res['metafield']:
+            result.update(meta['jsonValue'])
+        return True, result
+
+    def payment_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+        op = create_payment_customization(dict(
+            function_id=self.func_id,
+            enabled=data['enabled'],
+            title=data['title'],
+            metafields=self.format_metas(data)
+        ))
+        res = self.gql.fetch_data(op)['paymentCustomizationCreate']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('CreatePaymentCustomizationError: %s', msg)
+            return False, msg, res['userErrors']
+        self.logger.info('CreatePaymentCustomizationSuccess: %s', dumps(res))
+        return True, None, dict(
+            id=int(res['paymentCustomization']['id'].split('/')[-1]),
+            enabled=data['enabled'],
+            title=data['title'],
+        )
+
+    def payment_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+        gid = f'gid://shopify/PaymentCustomization/{record_id}'
+        op = update_payment_customization(gid, dict(
+            enabled=data['enabled'],
+            title=data['title'],
+        ))
+        res = self.gql.fetch_data(op)['paymentCustomizationUpdate']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('UpdatePaymentCustomizationError: %s', msg)
+            return False, msg, res['userErrors']
+        self.logger.info('UpdatePaymentCustomizationSuccess: %s', dumps(res))
+        # Update meta
+        metas = self.format_metas(data, gid)
+        op = update_multiple_meta(metas)
+        res = self.gql.fetch_data(op)['metafieldsSet']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('UpdateMetaError: %s', msg)
+            return False, msg, res['userErrors']
+        return True, None, dict(
+            id=record_id,
+            enabled=data['enabled'],
+            title=data['title'],
+        )
+
+    def payment_delete(self, record_id: int) -> Tuple[bool, Optional[str], Optional[list]]:
+        gid = f'gid://shopify/PaymentCustomization/{record_id}'
+        op = delete_payment_customization(gid)
+        res = self.gql.fetch_data(op)['paymentCustomizationDelete']
+        if len(res['userErrors']) > 0:
+            msg = dumps(res['userErrors'])
+            self.logger.error('DeletePaymentCustomizationError: %s', msg)
+            return False, msg, res['userErrors']
+        self.logger.info('DeletePaymentCustomizationSuccess: %s', record_id)
         return True, None, None

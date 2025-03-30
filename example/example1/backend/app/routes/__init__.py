@@ -9,6 +9,10 @@
 
 
 def register_routes(app):
+    # extensions
+    # from .extension import register_extension_routers
+    # register_extension_routers(app)
+
     pass
 
 

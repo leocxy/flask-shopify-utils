@@ -7,7 +7,7 @@
 # @Date    : 28/11/2024 15:07:16
 """
 from types import FunctionType
-from app.schemas.query import query_webhooks
+from app.schemas.query import query_webhooks, query_delivery_customization, query_payment_customization
 
 
 def test_query_webhooks(test_instance) -> None:
@@ -16,10 +16,27 @@ def test_query_webhooks(test_instance) -> None:
     except Exception as e:
         assert False, e
 
+
+def test_query_delivery_customization() -> None:
+    try:
+        query_delivery_customization('gid://shopify/DeliveryCustomization/123456', 'namespace', 'key')
+    except Exception as e:
+        assert False, e
+
+
+def test_query_payment_customization() -> None:
+    try:
+        query_payment_customization('gid://shopify/PaymentCustomization/123456', 'namespace', 'key')
+    except Exception as e:
+        assert False, e
+
+
 ###
 # Coverage check - make sure all functions are covered
 ###
 COVERAGE_FUNCS = [name for name, obj in locals().items() if isinstance(obj, FunctionType) and name.startswith('test_')]
+
+
 def test_coverage_check() -> None:
     from app.schemas import query as query_schema
     funcs = []

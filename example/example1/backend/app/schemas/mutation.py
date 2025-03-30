@@ -97,3 +97,57 @@ def create_webhooks(data: dict) -> Operation:
         mutation = op.webhook_subscription_create(topic=topic, webhook_subscription=data[topic], __alias__=topic)
         mutation.user_errors()
     return op
+
+
+def create_delivery_customization(input_data: dict) -> Operation:
+    op = Operation(shopify_schema.mutation_type, 'CreateDeliveryCustomization')
+    mutation = op.delivery_customization_create(
+        delivery_customization=input_data
+    )
+    mutation.delivery_customization.id()
+    mutation.user_errors()
+    return op
+
+
+def update_delivery_customization(gid: str, input_data: dict) -> Operation:
+    op = Operation(shopify_schema.mutation_type, 'UpdateDeliveryCustomization')
+    mutation = op.delivery_customization_update(
+        id=gid,
+        delivery_customization=input_data
+    )
+    mutation.user_errors()
+    return op
+
+
+def delete_delivery_customization(gid: str) -> Operation:
+    op = Operation(shopify_schema.mutation_type, 'DeleteDeliveryCustomization')
+    mutation = op.delivery_customization_delete(id=gid)
+    mutation.user_errors()
+    return op
+
+
+def create_payment_customization(input_data: dict) -> Operation:
+    op = Operation(shopify_schema.mutation_type, 'CreatePaymentCustomization')
+    mutation = op.payment_customization_create(
+        payment_customization=input_data
+    )
+    mutation.payment_customization.id()
+    mutation.user_errors()
+    return op
+
+
+def update_payment_customization(gid: str, input_data: dict) -> Operation:
+    op = Operation(shopify_schema.mutation_type, 'UpdatePaymentCustomization')
+    mutation = op.payment_customization_update(
+        id=gid,
+        payment_customization=input_data
+    )
+    mutation.user_errors()
+    return op
+
+
+def delete_payment_customization(gid: str) -> Operation:
+    op = Operation(shopify_schema.mutation_type, 'DeletePaymentCustomization')
+    mutation = op.payment_customization_delete(id=gid)
+    mutation.user_errors()
+    return op
