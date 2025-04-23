@@ -15,6 +15,6 @@ if __name__ == '__main__':
     # Run
     port = getenv('BACKEND_PORT')
     if port and getenv('FLASK_ENV') == 'development':
-        app.run(port=int(port))
+        app.run(port=int(port), host='127.0.0.1')
     else:
         app.run()

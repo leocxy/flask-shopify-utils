@@ -53,11 +53,13 @@ def get_version(version: str = None, restful: bool = False) -> str:
 
 
 class GraphQLClient:
-    def __init__(self, app_url: str, token: str, timeout: int = 15):
+    def __init__(self, app_url: str, token: str, timeout: int = 15, cost_debug: bool = False):
         self.version = get_version()
         self.timeout = timeout
         self.url = f'https://{app_url}/admin/api/{self.version}/graphql.json'
         self.headers = {'X-Shopify-Access-Token': token}
+        if cost_debug:
+            self.headers['Shopify-GraphQL-Cost-Debug'] = 1
         self._client = HTTPEndpoint(self.url, self.headers, timeout)
 
     @property

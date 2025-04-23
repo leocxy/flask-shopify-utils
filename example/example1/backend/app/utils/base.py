@@ -58,9 +58,9 @@ class BasicHelper:
         return self._store
 
     @property
-    def gql(self):
+    def gql(self, cost_debug: bool = False):
         if not self._gql:
-            self._gql = GraphQLClient(self.store.key, self.store.token)
+            self._gql = GraphQLClient(self.store.key, self.store.token, cost_debug=cost_debug)
         return self._gql
 
     @property

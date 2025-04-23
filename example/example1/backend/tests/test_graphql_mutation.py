@@ -156,7 +156,7 @@ def test_update_payment_customization() -> None:
 
 def test_delete_payment_customization() -> None:
     try:
-        delete_delivery_customization('gid://shopify/PaymentCustomization/1234')
+        delete_payment_customization('gid://shopify/PaymentCustomization/1234')
     except Exception as e:
         assert False, e
 
