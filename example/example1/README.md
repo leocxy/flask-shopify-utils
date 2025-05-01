@@ -13,9 +13,11 @@ The project is follow the [Shopify App Structure](https://shopify.dev/docs/apps/
 
 ### Installation
 
+You can use any package manager to install the dependencies, but we recommend using `yarn`.
+
 ```shell
 # Install the Shopify CLI
->yarn add @shopify/cli @shopify/app
+>yarn add @shopify/cli
 
 # Connect to the existing Shopify App
 >yarn shopify app config link
@@ -41,4 +43,14 @@ yarn app function schema --stdout --path=extensions/order-discount
 
 # example2: generate the schema to the file
 yarn app function schema --path=extensions/order-discount
+```
+
+### Download the example codes
+
+After install the `flask-shopify-utils`, we can get the sample codes by running the following command on the root folder.
+
+`Important Note` - It will overwrite the existing files, please make sure your work have been saved.
+
+```shell
+>lazy-dog
 ```

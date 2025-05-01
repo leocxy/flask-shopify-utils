@@ -21,6 +21,11 @@ You should use Shopify CLI to pull the app configs from the root folder.
 ### Local Development
 
 ```shell
+# Check python version
+>python -v
+
+# (optional) install virtualenv
+>pip install virtualenv
 
 # Access the project
 >cd /path/to/project/backend
@@ -29,10 +34,13 @@ You should use Shopify CLI to pull the app configs from the root folder.
 >virtualenv .venv
 
 # Active virtual env
->source .venv/bin/active
+>. .venv/bin/activate
 
 # Install dependencies
 >pip install -r requirements/index.txt
+
+# (optional) if pip-tools is installed, you can install dependencies via this comment
+>pip-sync -a requirements/index.txt
 
 # Run flask 
 >flask run
