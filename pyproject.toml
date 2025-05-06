@@ -34,7 +34,8 @@ dependencies = [
     "requests < 3",
     "Cerberus < 2",
     "PyJWT < 3",
-    "simplejson < 4"
+    "simplejson < 4",
+    "certifi==2025.1.31"
 ]
 dynamic = ["version"]
 
