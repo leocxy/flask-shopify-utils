@@ -499,15 +499,18 @@ class ShopifyUtil:
     @classmethod
     def format_api_scopes(cls, data: list) -> str:
         scopes = {}
+        xxx = 'xxx'
         for v in data:
-            permission, name = v.split('_', 1)
-            if name not in scopes.keys():
-                scopes[name] = permission
-            elif permission == 'write':
-                scopes[name] = permission
+            if 'read_' in v:
+                name = v.replace('read_', xxx)
+                if name not in scopes:
+                    scopes[name] = 'read'
+            else:
+                name = v.replace('write_', xxx)
+                scopes[name] = 'write'
         data = []
-        for k, v in scopes.items():
-            data.append('{}_{}'.format(v, k))
+        for name, permission in scopes.items():
+            data.append(name.replace(xxx, f'{permission}_'))
         return ','.join(data)
 
     def generate_internal_hash(self, value, expired_time: str = 'daily') -> str:
