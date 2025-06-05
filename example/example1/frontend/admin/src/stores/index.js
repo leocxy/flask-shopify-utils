@@ -3,6 +3,9 @@ import {defineStore} from "pinia"
 import isString from "lodash/isString"
 import isUndefined from "lodash/isUndefined"
 import Swal from "sweetalert2"
+// pretty json
+import VueJsonPretty from "vue-json-pretty"
+import 'vue-json-pretty/lib/styles.css'
 
 const Toast = Swal.mixin({
     toast: true,
@@ -120,6 +123,27 @@ export const useDefault = defineStore("default", () => {
         return `${rs.url}${params}`
     }
 
+    const prettyJSON = (title, json_data) => {
+        Swal.fire({
+            title: title,
+            html: '<div id="vue-remark"></div>',
+            showCloseButton: true,
+            didOpen: () => {
+                const app = createApp(VueJsonPretty, {
+                    data: JSON.parse(json_data),
+                    virtual: true,
+                })
+                app.mount('#vue-remark')
+
+                Swal.getPopup().__vueApp = app
+            },
+            willClose: () => {
+                const app = Swal.getPopup().__vueApp
+                if (app) app.unmount()
+            }
+        })
+    }
+
 
     return {
         app_bridge,
@@ -132,6 +156,7 @@ export const useDefault = defineStore("default", () => {
         collectionPicker,
         errorCallback,
         formValidation,
-        getApi
+        getApi,
+        prettyJSON,
     }
 })
