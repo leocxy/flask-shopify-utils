@@ -47,7 +47,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('webhooks', schema=None) as batch_op:
-        batch_op.create_index('store_webhook', ['store_id', 'webhook_id'], unique=False)
+        batch_op.create_index('webhook_event_id', ['store_id', 'webhook_id', 'target'], unique=False)
+        batch_op.create_index('webhook_target', ['store_id', 'target', 'action', 'status'], unique=False)
 
     # ### end Alembic commands ###
 

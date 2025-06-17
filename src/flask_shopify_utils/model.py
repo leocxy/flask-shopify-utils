@@ -66,7 +66,8 @@ class Webhook(db.Model, BasicMethod):
     __tablename__ = 'webhooks'
     __table_args__ = (
         db.PrimaryKeyConstraint('id'),
-        db.Index('store_webhook', 'store_id', 'webhook_id')
+        db.Index('webhook_event_id', 'store_id', 'webhook_id', 'target'),
+        db.Index('webhook_target', 'store_id', 'target', 'action', 'status')
     )
     id = db.Column(db.Integer)
     store_id = db.Column(db.Integer, db.ForeignKey('stores.id'))
