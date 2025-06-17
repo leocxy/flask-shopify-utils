@@ -202,6 +202,9 @@ def test_coverage_check() -> None:
     from app.schemas import mutation as mutation_schema
     funcs = []
     for item in dir(mutation_schema):
+        # exclude methods
+        if item in ['TypedDict']:
+            continue
         if isinstance(getattr(mutation_schema, item), FunctionType):
             fn = 'test_{}'.format(item)
             if fn not in COVERAGE_FUNCS:

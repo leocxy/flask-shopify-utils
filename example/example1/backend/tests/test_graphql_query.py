@@ -41,6 +41,9 @@ def test_coverage_check() -> None:
     from app.schemas import query as query_schema
     funcs = []
     for item in dir(query_schema):
+        # exclude methods
+        if item in ['TypedDict', 'format_meta_list']:
+            continue
         if isinstance(getattr(query_schema, item), FunctionType):
             fn = 'test_{}'.format(item)
             if fn not in COVERAGE_FUNCS:

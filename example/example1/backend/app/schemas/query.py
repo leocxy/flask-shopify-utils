@@ -7,8 +7,27 @@
 # @Date    : 28/11/2024 15:00:39
 """
 from sgqlc.operation import Operation
+from typing import TypedDict
+from typing_extensions import NotRequired
 # custom modules
 from .shopify import shopify as shopify_schema
+
+
+class QueryMeta(TypedDict):
+    namespace: str
+    key: str
+    alias: str
+    is_json: NotRequired[bool]
+
+
+def format_meta_list(query, meta_list: list[QueryMeta] = None) -> None:
+    if not meta_list:
+        return
+        # meta data
+    for val in meta_list:
+        v = query.metafield(namespace=val['namespace'], key=val['key'], __alias__=val['alias'])
+        is_json = val.get('is_json')
+        v.value() if is_json is None or not is_json else v.json_value()
 
 
 def query_webhooks(cursor: str = None) -> Operation:
