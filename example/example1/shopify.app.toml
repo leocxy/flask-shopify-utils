@@ -14,6 +14,7 @@ dev_store_url = "pocket-square-sandbox.myshopify.com"
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customers,read_products,read_shipping,write_shipping"
+# the legacy install flow will be easier for the first time installation
 use_legacy_install_flow = false
 
 [auth]
@@ -23,7 +24,7 @@ redirect_urls = [
 ]
 
 [webhooks]
-api_version = "2024-07"
+api_version = "2025-07"
 
   [webhooks.privacy_compliance]
   customer_deletion_url = "https://merely-wyoming-genome-advances.trycloudflare.com/webhook/customers/redact"

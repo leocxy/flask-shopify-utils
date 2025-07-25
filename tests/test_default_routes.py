@@ -98,7 +98,7 @@ def test_index_route(initial_test_client):
     )
     res = client.get('/?{}'.format(urlencode(params)))
     test.assertEqual(res.status_code, 302)
-    test.assertIn('/admin?', res.headers.get('Location', ''))
+    test.assertIn('/install?', res.headers.get('Location', ''))
 
 
 def test_admin_index_route(initial_test_client):

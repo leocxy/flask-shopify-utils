@@ -657,11 +657,18 @@ class ShopifyUtil:
         @default_routes.route('/', methods=['GET'], endpoint='index')
         def index() -> Response:
             """ Show Embedded App or Docs page """
+            from flask_shopify_utils.model import Store
+
             params = request.args
             if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) < 4:
                 # Redirect to the Docs page
                 return redirect(url_for('docs_default.index'))
-            return redirect(url_for('shopify_default.admin', **params))
+            # check store record from database
+            if _ := Store.query.filter_by(key=params.get('shop')).first():
+                return redirect(url_for('shopify_default.admin', **params))
+
+            # redirect to install path
+            return redirect(url_for('shopify_default.install', shop=params.get('shop')))
 
         # Register the `callback` route
         @default_routes.route('/callback', methods=['GET'], endpoint='callback')
