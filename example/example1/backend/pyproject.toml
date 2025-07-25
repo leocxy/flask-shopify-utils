@@ -25,14 +25,13 @@ classifiers = [
     "Framework :: Flask"
 ]
 dependencies = [
-    "flask-shopify-utils < 0.2.0",
+    "flask-shopify-utils < 0.3.0",
     "Flask-Migrate < 5",
     "python-dotenv < 2.0.0",
     "prettytable < 4",
     "pymysql < 2",
     "python-dateutil < 3",
-    "cryptography < 50",
-    "certifi==2025.1.31"
+    "cryptography < 50"
 ]
 
 [project.optional-dependencies]

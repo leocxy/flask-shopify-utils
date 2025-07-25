@@ -27,6 +27,22 @@ from app.schemas.mutation import update_meta, create_discount_code, update_disco
     delete_payment_customization
 
 
+def fn_debug(func):
+    """
+    debug decorator
+    Capture the input and output of the function
+    """
+
+    @wraps(func)
+    def decorator(*args, **kwargs):
+        args[0].logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:]))
+        result = func(*args, **kwargs)
+        args[0].logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
+        return result
+
+    return decorator
+
+
 class BasicHelper:
     def __init__(self, store_id: int = 1, log_name: str = 'basic_helper'):
         self._store = Store.query.filter_by(id=store_id).first()
@@ -34,8 +50,7 @@ class BasicHelper:
             raise Exception('Store[{}] does not exists!'.format(store_id))
         # Shopify API
         self._gql = None
-        self._api = None
-        self._api_request = None
+        self._restful = None
         # Logger
         self.logger = Logger('BasicHelper')
         handler = RotatingFileHandler(
@@ -64,19 +79,7 @@ class BasicHelper:
         return self._gql
 
     @property
-    def api(self):
-        # Shopify Official
-        import shopify
-        from flask_shopify_utils.utils import patch_shopify_with_limits, get_version
-        if not self._api:
-            api_session = shopify.Session(self.store.key, get_version(restful=True), self.store.token)
-            patch_shopify_with_limits()
-            shopify.ShopifyResource.activate_session(api_session)
-            self._api = shopify
-        return self._api
-
-    @property
-    def api_request(self):
+    def restful(self):
         """
         Using requests to send request to Shopify endpoint
         With a better retry strategy and easy to implement to concurrent
@@ -84,11 +87,11 @@ class BasicHelper:
         # Using requests
         from requests import Session
         from flask_shopify_utils.utils import initial_restful_adapter
-        if not self._api_request:
-            self._api_request = Session()
-            self._api_request.headers.update({'X-Shopify-Access-Token': self.store.token})
-            self._api_request.mount('https://', initial_restful_adapter())
-        return self._api_request
+        if not self._restful:
+            self._restful = Session()
+            self._restful.headers.update({'X-Shopify-Access-Token': self.store.token})
+            self._restful.mount('https://', initial_restful_adapter())
+        return self._restful
 
     def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Tuple[
         bool, Optional[str or dict]]:
@@ -99,22 +102,6 @@ class BasicHelper:
             self.logger.warning('UpdateMetaError: %s', msg)
             return False, msg
         return True, res['metafields'][0]['id'].split('/')[-1]
-
-
-def fn_debug(func):
-    """
-    debug decorator
-    Capture the input and output of the function
-    """
-
-    @wraps(func)
-    def decorator(*args, **kwargs):
-        args[0].logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:]))
-        result = func(*args, **kwargs)
-        args[0].logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
-        return result
-
-    return decorator
 
 
 class DiscountHelper(ABC, BasicHelper):
