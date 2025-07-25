@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -76,7 +76,6 @@ class ShopifyUtil:
         config.setdefault('BACKEND_PATH', path.join(config.get('ROOT_PATH'), 'backend'))
         config.setdefault('TEMPORARY_PATH', path.join(config.get('BACKEND_PATH'), 'tmp'))
         config.setdefault('API_VERSION', get_version())
-        config.setdefault('RESTFUL_VERSION', get_version(restful=True))
         config.setdefault('TIMEZONE', timezone('Pacific/Auckland'))
         config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
         config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')

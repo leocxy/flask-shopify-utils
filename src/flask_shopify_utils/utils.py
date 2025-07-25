@@ -16,9 +16,8 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
 
-def get_version(version: str = None, restful: bool = False) -> str:
+def get_version(version: str = None) -> str:
     """ Get Shopify API Version """
-    from shopify import ApiVersion
     # Get Latest version of GraphQL
     today = datetime.today()
     month = int(today.strftime('%-m'))
@@ -27,8 +26,7 @@ def get_version(version: str = None, restful: bool = False) -> str:
             month = v
             break
     latest_version = int('{}{:02d}'.format(today.strftime('%Y'), month))
-    if not version:
-        version = environ.get('API_VERSION', '2023-04')
+    version = environ.get('API_VERSION', '2023-04') if not version else version
     if version:
         version = int(version.replace('-', ''))
         # check version exists or not
@@ -44,11 +42,6 @@ def get_version(version: str = None, restful: bool = False) -> str:
     version = '{}-{}'.format(version[:4], version[-2:])
     # Set Environment variable
     environ['API_VERSION'] = version
-    if restful:
-        versions = list(ApiVersion.versions.keys())
-        # unstable version
-        if version not in versions:
-            version = versions[0]
     return version
 
 
