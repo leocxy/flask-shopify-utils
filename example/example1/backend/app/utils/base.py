@@ -78,20 +78,34 @@ class BasicHelper:
             self._gql = GraphQLClient(self.store.key, self.store.token, cost_debug=cost_debug)
         return self._gql
 
-    @property
-    def restful(self):
+    @fn_debug
+    def restful(self, url_path: str, method: str = 'GET', params: dict = None, json_data: dict = None):
         """
+        Restful API has been deprecated by Shopify Since 2024-10-01
+
         Using requests to send request to Shopify endpoint
         With a better retry strategy and easy to implement to concurrent
+        # pagination
+        https://shopify.dev/docs/api/admin-rest/usage/pagination
+
+        ### example
+        # get customers data
+        ```python
+        res = self.restful('customers', 'GET')
+        ```
         """
         # Using requests
         from requests import Session
-        from flask_shopify_utils.utils import initial_restful_adapter
+        from flask_shopify_utils.utils import initial_restful_adapter, get_version
         if not self._restful:
             self._restful = Session()
             self._restful.headers.update({'X-Shopify-Access-Token': self.store.token})
             self._restful.mount('https://', initial_restful_adapter())
-        return self._restful
+
+        # build the full URL
+        url = f'https://{self.store.key}/admin/api/{get_version()}/{url_path}.json'
+        # this might have some issue
+        return self._restful.request(method.upper(), url, params=params, json=json_data)
 
     def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Tuple[
         bool, Optional[str or dict]]:
