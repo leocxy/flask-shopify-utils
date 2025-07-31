@@ -27,7 +27,7 @@ flask==3.1.1
     #   flask-sqlalchemy
 flask-migrate==4.1.0
     # via CustomAppExample1 (pyproject.toml)
-flask-shopify-utils==0.2.1
+flask-shopify-utils==0.2.3
     # via CustomAppExample1 (pyproject.toml)
 flask-sqlalchemy==3.1.1
     # via
@@ -75,7 +75,7 @@ simplejson==3.20.1
     # via flask-shopify-utils
 six==1.17.0
     # via python-dateutil
-sqlalchemy==2.0.41
+sqlalchemy==2.0.42
     # via
     #   alembic
     #   flask-sqlalchemy

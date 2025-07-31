@@ -26,6 +26,12 @@ from app.schemas.mutation import update_meta, create_discount_code, update_disco
     delete_delivery_customization, create_payment_customization, update_payment_customization, \
     delete_payment_customization
 
+###
+# Add custom methods here
+###
+
+
+# inherit from examle code
 
 def fn_debug(func):
     """
