@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -664,8 +664,13 @@ class ShopifyUtil:
                 # Redirect to the Docs page
                 return redirect(url_for('docs_default.index'))
             # check store record from database
-            if _ := Store.query.filter_by(key=params.get('shop')).first():
-                return redirect(url_for('shopify_default.admin', **params))
+            if record := Store.query.filter_by(key=params.get('shop')).first():
+                client = GraphQLClient(record.key, record.token)
+                raw_query = '{ shop { name, url } appInstallation { accessScopes { handle }} }'
+                res = client.client(raw_query)
+                # check 401
+                if isinstance(res, dict) and not res.get('errors'):
+                    return redirect(url_for('shopify_default.admin', **params))
 
             # redirect to install path
             return redirect(url_for('shopify_default.install', shop=params.get('shop')))

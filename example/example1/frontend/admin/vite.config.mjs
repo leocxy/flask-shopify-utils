@@ -1,5 +1,5 @@
-import {fileURLToPath, URL} from 'node:url'
-import {defineConfig} from 'vite'
+import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 
@@ -7,7 +7,7 @@ const proxyOptions = {
     target: `http://127.0.0.1:${process.env?.BACKEND_PORT ?? '5000'}`,
     changeOrigin: false,
     secure: true,
-    ws: false,
+    ws: false
     // configure: (proxy, _) => {
     //   proxy.on('proxyReq', (proxyReq, req, _) => {
     //     console.log('Proxying Request:');
@@ -24,7 +24,7 @@ const proxyOptions = {
 }
 
 // yarn shopify app dev need proxy the extension to the backend server
-let proxy = (process.env?.IS_PROXY ?? '0') === '1' ? {'/': proxyOptions} : {
+let proxy = (process.env?.IS_PROXY ?? '0') === '1' ? { '/': proxyOptions } : {
     '^/admin(/|(\\?.*)?$)': proxyOptions
 }
 

@@ -31,7 +31,7 @@ from app.schemas.mutation import update_meta, create_discount_code, update_disco
 ###
 
 
-# inherit from examle code
+# inherit from example code
 
 def fn_debug(func):
     """
