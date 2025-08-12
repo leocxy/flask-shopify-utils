@@ -54,3 +54,37 @@ After install the `flask-shopify-utils`, we can get the sample codes by running 
 ```shell
 >lazy-dog
 ```
+
+### Known issues
+
+When you try to generate the extension by shopify CLI, it might popup an error message like 
+
+```text
+── external error ─────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Error coming from `npm exec -- graphql-code-generator --config package.json`
+
+Command failed with exit code 1: npm exec -- graphql-code-generator --config package.json
+Cannot convert undefined or null to object
+[15:13:34] Parse configuration [started]
+[15:13:34] Parse configuration [failed]
+[15:13:34] → Cannot convert undefined or null to object
+
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+```
+
+In this case, you can add `@shopify/shopify_function` and `javy` to the root` `package.json` file, like this:
+
+```json
+{
+  "dependencies": {
+    ...
+    "@shopify/shopify_function": "^1.0.6",
+    "javy": "0.1.2"
+  }
+}
+```
+
+Then try to generate the extension again.
+
+Here is the [reference](https://github.com/Shopify/cli/issues/2095)
