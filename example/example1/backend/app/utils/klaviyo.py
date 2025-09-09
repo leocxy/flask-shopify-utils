@@ -19,9 +19,9 @@ from app.utils.base import fn_debug
 
 
 class KlaviyoHelper(object):
-    def __init__(self, log_name: str = 'klaviyo_helper') -> None:
+    def __init__(self, log_name: str = 'klaviyo_helper', api_token: str = None) -> None:
         # Klaviyo Token
-        token = getenv('KLAVIYO_PRIVATE_KEY', None)
+        token = api_token if api_token else getenv('KLAVIYO_PRIVATE_KEY', None)
         if not token:
             raise Exception('Klaviyo Token is not set up yet!')
         self.logger = Logger('KlaviyoHelper')
@@ -40,9 +40,10 @@ class KlaviyoHelper(object):
             level = 'INFO'
         handler.setLevel(level)
         self.logger.addHandler(handler)
+        self._client = None
         # Custom variables
         self.token = token
-        self.version = '2024-05-15'
+        self.version = '2025-07-15'
         self.client = Session()
         self.client.headers.update({
             "Authorization": "Klaviyo-API-Key {}".format(token),

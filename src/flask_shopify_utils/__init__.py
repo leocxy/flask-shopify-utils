@@ -440,7 +440,7 @@ class ShopifyUtil:
             key = list(validator.errors.keys())[0]
             first_error = validator.errors[key][0]
             keys.append(str(key))
-            while type(first_error) == dict:
+            while isinstance(first_error, dict):
                 key = list(first_error.keys())[0]
                 first_error = first_error[key][0]
                 keys.append(str(key))
@@ -591,7 +591,7 @@ class ShopifyUtil:
         )
 
         @doc_routes.route('/docs', methods=['GET'])
-        def index() -> Response:
+        def doc_index() -> Response:
             """
             Show the docs for default message
             """
@@ -882,7 +882,7 @@ class ShopifyUtil:
             try:
                 store = self.db.query(Store).filter_by(id=store_id).first()
                 if not store:
-                    raise ClickException('Store[{}} does not exists!'.format(store_id))
+                    raise ClickException('Store[{}] does not exists!'.format(store_id))
             except Exception as e:
                 print(e)
                 raise ClickException('Can`t fetch Store data from database!')

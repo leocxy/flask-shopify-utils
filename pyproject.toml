@@ -44,11 +44,12 @@ lazy-dog = "flask_shopify_utils.cli.main:copy_files"
 dev = [
     "pytest < 9",
     "twine < 7",
+    "flake8 < 8",
     "build == 1.2.1"
 ]
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "8.0"
 addopts = '-vs'
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -115,6 +115,12 @@ And you can find them from the `requirements` folder.
 >pip-compile --output-file=requirements/index.txt pyproject.toml
 ````
 
+## Check the code format
+
+```shell
+>flake8
+```
+
 ## Running the tests
 
 Make sure you have install the repository locally.

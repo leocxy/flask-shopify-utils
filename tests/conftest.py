@@ -40,7 +40,6 @@ def initial():
 def initial_test_client(initial):
     """ Initial the database """
     app, db, test, utils = initial
-    from flask_shopify_utils.model import Store, Webhook
     with app.app_context():
         db.create_all()
         yield app.test_client(), test, utils
