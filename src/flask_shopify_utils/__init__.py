@@ -229,7 +229,7 @@ class ShopifyUtil:
             params = request.args
             if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) < 4:
                 # Redirect to the Docs page
-                return redirect(url_for('docs_default.index'))
+                return redirect(url_for('docs_default.doc_index'))
             # Check timestamp
             timestamp1 = int(request.args.get('timestamp', '0'))
             timestamp2 = int(time()) - 86400
@@ -631,7 +631,7 @@ class ShopifyUtil:
                     jwtToken=self.create_admin_jwt_token()
                 ))
             # redirect to the docs page
-            return redirect(url_for('docs_default.index'))
+            return redirect(url_for('docs_default.doc_index'))
 
         @default_routes.route('/admin', methods=['GET'], endpoint='admin')
         @self.check_hmac
@@ -662,7 +662,7 @@ class ShopifyUtil:
             params = request.args
             if len([x for x in params.keys() if x in ['shop', 'hmac', 'host', 'timestamp', 'session']]) < 4:
                 # Redirect to the Docs page
-                return redirect(url_for('docs_default.index'))
+                return redirect(url_for('docs_default.doc_index'))
             # check store record from database
             if record := Store.query.filter_by(key=params.get('shop')).first():
                 client = GraphQLClient(record.key, record.token)
