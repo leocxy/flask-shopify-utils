@@ -1,0 +1,72 @@
+name: Build and Test the Shopify App
+
+on:
+  push:
+    branches: [ "master", "main" ]
+
+permissions:
+  contents: read
+
+env:
+  SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5.0.0
+        with:
+          node-version: "20.x"
+          cache: "yarn"
+
+      - name: Install dependencies & Build Static Files
+        run: |
+          cd frontend/admin
+          yarn install
+          yarn build
+
+      - name: Validated Build, check SHOPIFY_API_KEY in index.html
+        run: |
+          if [ -f "dist/admin/index.html" ]; then
+            echo "Build succeeded. Admin UI Static files found."
+          else
+            echo "Build failed, Admin UI Static files not found!"
+            exit 1
+          fi
+          content=$(cat dist/admin/index.html)
+          if echo "$content" | grep -q "$SHOPIFY_API_KEY"; then
+            echo "SHOPIFY_API_KEY found in index.html"
+          else
+            echo "SHOPIFY_API_KEY not found in index.html"
+            exit 1
+          fi
+
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r backend/requirements/dev.txt
+
+      - name: Run unit tests
+        run: |
+          cd backend
+          pytest tests
+          flake8
+
+      - name: Clear the node_modules and virtual environment
+        run: |
+          rm -rf frontend/admin/node_modules
+          rm -rf node_modules
+          rm -rf venv

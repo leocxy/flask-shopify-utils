@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 120
+ignore = E501, W391
+exclude =
+	.venv,
+	migrations,
+	tmp
+	app/schemas/shopify.py
