@@ -63,4 +63,3 @@ def klaviyo(initial):
     from app.utils.klaviyo import KlaviyoHelper
     helper = KlaviyoHelper()
     yield helper, test
-

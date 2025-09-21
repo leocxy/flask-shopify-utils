@@ -10,7 +10,7 @@ For any extra dependencies, please add them to `pyproject.toml` and run `pip-com
 ### Environment
 
 - OS: MacOX / Linux 
-- Python: ^3.8
+- Python: ^3.9
 
 ---
 

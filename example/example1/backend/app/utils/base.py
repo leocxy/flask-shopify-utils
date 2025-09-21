@@ -113,8 +113,8 @@ class BasicHelper:
         # this might have some issue
         return self._restful.request(method.upper(), url, params=params, json=json_data)
 
-    def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Tuple[
-        bool, Optional[str or dict]]:
+    def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') \
+            -> Tuple[bool, Optional[str or dict]]:
         op = update_meta(owner_id, value, namespace, key, value_type)
         res = self.gql.fetch_data(op)['metafieldsSet']
         if len(res['userErrors']) > 0:
