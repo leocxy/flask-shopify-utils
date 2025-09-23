@@ -19,7 +19,7 @@ from abc import abstractmethod, ABC
 # custom modules
 from app import app, db
 from app.models.shopify import DiscountCode
-from app.schemas.query import query_delivery_customization, query_payment_customization
+from app.schemas.query import query_delivery_customization, query_payment_customization, query_shopify_functions
 from app.schemas.mutation import update_meta, create_discount_code, update_discount_code, \
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, \
     update_multiple_meta, create_delivery_customization, update_delivery_customization, \
@@ -143,9 +143,26 @@ class DiscountHelper(ABC, BasicHelper):
     @property
     def func_id(self) -> str:
         if not self._func_id:
-            self._func_id = getenv(self.func_name, None)
+            # since 2025-01, the func id need to query from the API
+            # or you can get it from the URI
+            cursor = None
+            while True:
+                op = query_shopify_functions(25, cursor)
+                res = self.gql.fetch_data(op)['shopifyFunctions']
+                if not res:
+                    raise Exception('Can`t get the function list from Shopify!')
+                for node in res['nodes']:
+                    if node['title'] == self.func_name:
+                        self._func_id = node['id']
+                        break
+                if self._func_id:
+                    break
+                if not res['pageInfo']['hasNextPage']:
+                    break
+                cursor = res['pageInfo']['endCursor']
             if self._func_id is None:
-                raise Exception('Environment variable[{}] does not exists!'.format(self.func_name))
+                raise Exception(f'Can`t find the function[{self.func_name}] from the Shopify!')
+
         return self._func_id
 
     @staticmethod
@@ -154,7 +171,7 @@ class DiscountHelper(ABC, BasicHelper):
         """
         Schema example
 
-        date_regex = '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+        date_regex = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
         return dict(
             type=dict(type='string', required=True, allowed=['auto']),
             code=dict(type='string', required=True, nullable=True, maxlength=32),
@@ -249,6 +266,16 @@ class DiscountHelper(ABC, BasicHelper):
         output.update(record.get_extra())
         return output
 
+    def get_discount_classes(self) -> list:
+        rs = []
+        if self._code_stamp & (1 << 0):
+            rs.append('PRODUCT')
+        if self._code_stamp & (1 << 1):
+            rs.append('ORDER')
+        if self._code_stamp & (1 << 2):
+            rs.append('SHIPPING')
+        return rs
+
     def format_discount_code_input_data(self, record: DiscountCode) -> dict:
         input_data = dict(
             title=record.code_name,
@@ -262,6 +289,7 @@ class DiscountHelper(ABC, BasicHelper):
             ),
             customer_selection=dict(all=True),
             starts_at=record.start_date.strftime("%Y-%m-%dT%H:%M:%S"),
+            discount_classes=self.get_discount_classes(),
         )
         if record.limit_usage == 1 and record.maximum_usage is not None:
             input_data['usage_limit'] = record.maximum_usage
@@ -279,6 +307,7 @@ class DiscountHelper(ABC, BasicHelper):
             title=record.code_name,
             function_id=self.func_id,
             starts_at=record.start_date.strftime("%Y-%m-%dT%H:%M:%S"),
+            discount_classes=self.get_discount_classes(),
         )
         if record.end_date:
             input_data['ends_at'] = record.end_date.strftime("%Y-%m-%dT%H:%M:%S")
@@ -382,8 +411,8 @@ class DiscountHelper(ABC, BasicHelper):
         db.session.commit()
         return True, None, None
 
-    def _create_auto_code(self, record: DiscountCode, data: dict) -> Tuple[
-        bool, Optional[str], Optional[dict or list]]:
+    def _create_auto_code(self, record: DiscountCode, data: dict) \
+            -> Tuple[bool, Optional[str], Optional[dict or list]]:
         metas = self.format_meta_data(data)
         input_data = self.format_auto_discount_code_input_data(record)
         input_data['metafields'] = metas
@@ -398,8 +427,8 @@ class DiscountHelper(ABC, BasicHelper):
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
-    def _update_auto_code(self, record: DiscountCode, data: dict) -> Tuple[
-        bool, Optional[str], Optional[dict or list]]:
+    def _update_auto_code(self, record: DiscountCode, data: dict) \
+            -> Tuple[bool, Optional[str], Optional[dict or list]]:
         owner_id = 'gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id)
         input_data = self.format_auto_discount_code_input_data(record)
         op = update_auto_discount(owner_id, input_data)

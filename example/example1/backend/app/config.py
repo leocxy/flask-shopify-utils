@@ -9,8 +9,10 @@
 from os import getenv
 from os.path import dirname, join, abspath
 from pytz import timezone
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
+from glob import glob
 
+API_TOKEN_KEY = 'SHOPIFY_API_KEY'
 ROOT_PATH = abspath(dirname(dirname(dirname(__file__))))
 """
 ROOT_PATH should be the root path of your project
@@ -19,7 +21,19 @@ double check the path and remove the '/backend' from the path
 """
 if ROOT_PATH.endswith('/backend'):
     ROOT_PATH = ROOT_PATH[:-8]
+# node -> shopify app dev
+# it carries with the "SHOPIFY_API_KEY" env variable
+default_token = getenv(API_TOKEN_KEY)
 load_dotenv(dotenv_path=join(ROOT_PATH, '.env'), override=True)
+if getenv('FLASK_ENV') == 'development' and default_token != getenv(API_TOKEN_KEY):
+    # check all the .env.* files
+    env_files = glob(join(ROOT_PATH, '.env.*'))
+    for env_file in env_files:
+        # try to load variables from the file
+        values = dotenv_values(dotenv_path=env_file)
+        if values.get(API_TOKEN_KEY) == default_token:
+            load_dotenv(dotenv_path=env_file, override=True)
+            break
 
 
 class Config:
