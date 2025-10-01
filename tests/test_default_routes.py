@@ -40,24 +40,17 @@ def test_callback_route(initial_test_client):
     res = client.get('/callback')
     test.assertEqual(res.status_code, 200)
     result = res.get_json()
-    test.assertDictEqual(result, dict(status=403, message='Request origin cannot be verified'))
+    test.assertDictEqual(result, dict(status=401, message='The request has expired'))
     # Initial Cookie
     params = dict(shop='test.myshopify.com')
     res = client.get(f'/install?{urlencode(params)}')
     test.assertEqual(res.status_code, 302)
-    state = None
-    for cookie in res.headers.get('Set-Cookie').split(';'):
-        key, value = cookie.split('=')
-        if key == 'state':
-            state = value
-            client.set_cookie(key, value)
     # Error - timestamp expired
     timestamp = int(time()) - 86400 - 1
     params = dict(
         timestamp=timestamp,
         shop='test.myshopify.com',
         code='one_time_oauth_token',
-        state=state,
     )
     res = client.get('/callback?{}'.format(urlencode(params)))
     test.assertEqual(res.status_code, 200)
@@ -69,7 +62,6 @@ def test_callback_route(initial_test_client):
         timestamp=timestamp,
         shop='test.myshopify.com',
         code='one_time_oauth_token',
-        state=state,
     )
     res = client.get('/callback?{}'.format(urlencode(params)))
     test.assertEqual(res.status_code, 401)

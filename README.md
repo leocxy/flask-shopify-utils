@@ -146,4 +146,6 @@ Make sure you have install the repository locally.
 [Packing for Python](https://packaging.python.org/en/latest/tutorials/installing-packages/)
 
 # TODO
+[] Remove state from check_callback method
+[] Remove state cookie form intall method
 Add test for `ShopifyUtil` methods

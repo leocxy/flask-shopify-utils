@@ -14,7 +14,6 @@ from hashlib import sha256
 from functools import wraps, partial
 from hmac import new as hmac_new, compare_digest
 from datetime import datetime, timedelta
-from uuid import uuid4
 from requests import post as post_request
 from urllib.parse import urlencode
 from base64 import b64encode
@@ -28,7 +27,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -181,10 +180,6 @@ class ShopifyUtil:
 
         @wraps(func)
         def decorator(*args, **kwargs):
-            # check cookie
-            state = request.cookies.get('state', None)
-            if state is None or state != request.args.get('state'):
-                return jsonify(dict(status=403, message='Request origin cannot be verified'))
             # check time
             if int(request.args.get('timestamp', 0)) < (time() - 86400):
                 return jsonify(dict(message='The request has expired', status=401))
@@ -727,15 +722,12 @@ class ShopifyUtil:
             if not rs:
                 return resp
             # Redirect back to the Store Admin Panel for OAuth
-            state = uuid4().hex
             params = dict(
                 redirect_uri=url_for('shopify_default.callback', _scheme='https', _external=True),
                 client_id=self.config.get('SHOPIFY_API_KEY'),
                 scope=self.config.get('SCOPES'),
-                state=state
             )
             resp = redirect('https://{}/admin/oauth/authorize?{}'.format(shop, urlencode(params)))
-            resp.set_cookie('state', state)
             return resp
 
         # Register the Blueprint to routes
