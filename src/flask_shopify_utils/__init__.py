@@ -27,7 +27,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 
 JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
@@ -64,23 +64,18 @@ class ShopifyUtil:
         """ This is used to initialize your app object """
         if not (config is None or isinstance(config, dict)):
             raise ValueError("`config` must be an instance of dict or None")
-        base_config = app.config.copy()
-        if self.config:
-            base_config.update(self.config)
-        if config:
-            base_config.update(config)
 
-        config = base_config
-        config.setdefault('ROOT_PATH', getcwd())
-        config.setdefault('BACKEND_PATH', path.join(config.get('ROOT_PATH'), 'backend'))
-        config.setdefault('TEMPORARY_PATH', path.join(config.get('BACKEND_PATH'), 'tmp'))
-        config.setdefault('API_VERSION', get_version())
-        config.setdefault('TIMEZONE', timezone('Pacific/Auckland'))
-        config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
-        config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')
-        config.setdefault('BYPASS_VALIDATE', 0)
-        config.setdefault('DEBUG', False)
-        config.setdefault('SCOPES', environ.get('SCOPES', 'read_products'))
+        # set default value for testing
+        app.config.setdefault('ROOT_PATH', getcwd())
+        app.config.setdefault('BACKEND_PATH', path.join(app.config.get('ROOT_PATH'), 'backend'))
+        app.config.setdefault('TEMPORARY_PATH', path.join(app.config.get('BACKEND_PATH'), 'tmp'))
+        app.config.setdefault('API_VERSION', get_version())
+        app.config.setdefault('TIMEZONE', timezone('Pacific/Auckland'))
+        app.config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
+        app.config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')
+        app.config.setdefault('BYPASS_VALIDATE', 0)
+        app.config.setdefault('DEBUG', False)
+        app.config.setdefault('SCOPES', environ.get('SCOPES', 'read_products'))
 
         if not hasattr(app, 'extensions'):
             app.extensions = {}
@@ -96,7 +91,7 @@ class ShopifyUtil:
         current_time_func = self.current_time if current_time_func is None else current_time_func
 
         # Set internal variables
-        self._config = config
+        self._config = app.config
         self._app = app
 
     def current_time(self):
