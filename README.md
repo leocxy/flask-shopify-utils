@@ -1,6 +1,14 @@
 # Flask-Shopify-Utils
 
-The utils for Flask Application that build for Shopify Custom App 
+## CI Status (Python Versions)
+
+[![Python 3.9](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.9)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Atest)
+[![Python 3.10](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.10)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Atest)
+[![Python 3.11](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.11)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Atest)
+[![Python 3.12](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.12)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Atest)
+[![Python 3.13](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.13)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Atest)
+
+The utils for Flask Application that build for Shopify Custom App
 
 ---
 
