@@ -18,31 +18,27 @@ __author__ = 'Leo Chen'
 __email__ = 'leo.cxy88@gmail.com'
 __copyright__ = 'Copyright © PocketSquare'
 # Global Setting
-app = None
-db = None
-app_utils = None
+app = Flask(__name__)
+db = SQLAlchemy()
+app_utils = ShopifyUtil()
 
 
 def create_app(test_config: dict = None):
-    global app, db, app_utils
     dictConfig({
         'version': 1,
         'root': {'level': 'DEBUG' if getenv('FLASK_DEBUG', '0') == '1' else 'INFO'}
     })
     # Load Config From Object
-    app = Flask(__name__)
     app.config.from_object('app.config.Config')
     # Update Testing Config
     if test_config:
         app.config.update(test_config)
 
     # Init Database
-    db = SQLAlchemy()
     db.init_app(app)
     Migrate(app, db)
 
     # Initial Shopify Utils
-    app_utils = ShopifyUtil()
     app_utils.init_app(app)
     # Initial Shopify routes
     app_utils.enroll_default_route()

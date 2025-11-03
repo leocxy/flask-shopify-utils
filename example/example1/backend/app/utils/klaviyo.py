@@ -113,8 +113,8 @@ class KlaviyoHelper(object):
         return True, res.json()
 
     @fn_debug
-    def subscribe_profile(self, unique_id: str, list_id: str, email: str, attempt: int = 3) -> Tuple[
-        bool, Optional[str]]:
+    def subscribe_profile(self, unique_id: str, list_id: str, email: str, attempt: int = 3) \
+            -> Tuple[bool, Optional[str]]:
         # https://developers.klaviyo.com/en/reference/subscribe_profiles
         func = self.subscribe_profile.__name__
         params = dict(data=dict(
