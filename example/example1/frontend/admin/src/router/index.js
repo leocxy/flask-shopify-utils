@@ -8,23 +8,23 @@ const router = createRouter({
         // {
         //     path: '/func/payment-customization/create',
         //     name: 'payment.create',
-        //     component: () => import('../extensions/PaymentCustomization.vue')
+        //     component: () => import('../components/extensions/PaymentCustomization.vue')
         // },
         // {
         //     path: '/func/payment-customization/:record_id',
         //     name: 'payment.edit',
-        //     component: () => import('../extensions/PaymentCustomization.vue'),
+        //     component: () => import('../components/extensions/PaymentCustomization.vue'),
         //     props: true
         // },
         // {
         //     path: '/func/delivery-customization/create',
         //     name: 'delivery.create',
-        //     component: () => import('../extensions/DeliveryCustomization.vue')
+        //     component: () => import('../components/extensions/DeliveryCustomization.vue')
         // },
         // {
         //     path: '/func/delivery-customization/:record_id',
         //     name: 'delivery.edit',
-        //     component: () => import('../extensions/DeliveryCustomization.vue'),
+        //     component: () => import('../components/extensions/DeliveryCustomization.vue'),
         //     props: true
         // },
         {path: '/', name: 'home', component: IndexVue},
