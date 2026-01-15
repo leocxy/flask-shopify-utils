@@ -1,5 +1,5 @@
 <template>
-    <AppProvider>
+    <AppProvider :i18n="locales">
         <Page :title="title" :full-width="full_width">
             <RouterView @updateTitle="updateTitle" @setFullWidth="setFullWidth"/>
             <FooterHelp v-show="change">
@@ -14,6 +14,7 @@
 import {ref, onMounted, inject} from 'vue'
 import {useDefault} from "./stores/index"
 import {useRoute, useRouter} from "vue-router"
+import locales from '@ownego/polaris-vue/dist/locales/en.json'
 
 const $http = inject('$http')
 const store = useDefault()
