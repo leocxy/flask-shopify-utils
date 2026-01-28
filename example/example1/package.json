@@ -10,7 +10,7 @@
     "env": "yarn app env"
   },
   "dependencies": {
-    "@shopify/cli": "~3.84.1"
+    "@shopify/cli": "~3.88.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"
