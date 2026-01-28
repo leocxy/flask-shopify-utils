@@ -6,7 +6,7 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 6/10/23 4:22 pm
 """
-from os import path, getenv
+from os import path
 from logging import Formatter, Logger
 from logging.handlers import RotatingFileHandler
 from functools import wraps
@@ -19,7 +19,7 @@ from abc import abstractmethod, ABC
 # custom modules
 from app import app, db
 from app.models.shopify import DiscountCode
-from app.schemas.query import query_delivery_customization, query_payment_customization, query_shopify_functions
+from app.schemas.query import query_delivery_customization, query_payment_customization
 from app.schemas.mutation import update_meta, create_discount_code, update_discount_code, \
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, \
     update_multiple_meta, create_delivery_customization, update_delivery_customization, \
@@ -127,10 +127,10 @@ class BasicHelper:
 class DiscountHelper(ABC, BasicHelper):
     """ Here is the abstract class for DiscountCode """
 
-    def __init__(self, store_id: int = 1, log_name: str = 'discount_helper', func_name: str = None):
+    def __init__(self, store_id: int = 1, log_name: str = 'discount_helper'):
         super(DiscountHelper, self).__init__(store_id, log_name)
-        self.func_name = func_name if func_name else 'SHOPIFY_DISCOUNT_ID'
-        self._func_id = None
+        # grab this from extensions/??/shopify.extension.toml
+        self._func_handle = None
         self._ns = '$app:discount'
         self._key = 'config'
         # Product: 1 << 0
@@ -141,29 +141,11 @@ class DiscountHelper(ABC, BasicHelper):
         # gid://shopify/DiscountAutomaticNode/
 
     @property
-    def func_id(self) -> str:
-        if not self._func_id:
-            # since 2025-01, the func id need to query from the API
-            # or you can get it from the URI
-            cursor = None
-            while True:
-                op = query_shopify_functions(25, cursor)
-                res = self.gql.fetch_data(op)['shopifyFunctions']
-                if not res:
-                    raise Exception('Can`t get the function list from Shopify!')
-                for node in res['nodes']:
-                    if node['title'] == self.func_name:
-                        self._func_id = node['id']
-                        break
-                if self._func_id:
-                    break
-                if not res['pageInfo']['hasNextPage']:
-                    break
-                cursor = res['pageInfo']['endCursor']
-            if self._func_id is None:
-                raise Exception(f'Can`t find the function[{self.func_name}] from the Shopify!')
-
-        return self._func_id
+    def func_handle(self) -> str:
+        if not self._func_handle:
+            # need to use to function handle to create the discount code
+            raise Exception('Function handle is not set!')
+        return self._func_handle
 
     @staticmethod
     @abstractmethod
@@ -171,7 +153,7 @@ class DiscountHelper(ABC, BasicHelper):
         """
         Schema example
 
-        date_regex = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+        date_regex = r'^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$'
         return dict(
             type=dict(type='string', required=True, allowed=['auto']),
             code=dict(type='string', required=True, nullable=True, maxlength=32),
@@ -280,7 +262,7 @@ class DiscountHelper(ABC, BasicHelper):
         input_data = dict(
             title=record.code_name,
             code=record.code_name,
-            function_id=self.func_id,
+            function_handle=self.func_handle,
             applies_once_per_customer=record.one_use_per_customer == 1,
             combines_with=dict(
                 order_discounts=record.combine_with_order == 1,
@@ -305,7 +287,7 @@ class DiscountHelper(ABC, BasicHelper):
                 shipping_discounts=record.combine_with_shipping == 1,
             ),
             title=record.code_name,
-            function_id=self.func_id,
+            function_handle=self.func_handle,
             starts_at=record.start_date.strftime("%Y-%m-%dT%H:%M:%S"),
             discount_classes=self.get_discount_classes(),
         )
@@ -460,11 +442,11 @@ class DiscountHelper(ABC, BasicHelper):
 class CustomizationHelper(ABC, BasicHelper):
     """ Here is the abstract class for Customization function """
 
-    def __init__(self, store_id: int = 1, log_name: str = 'customization', func_name: str = None) -> None:
+    def __init__(self, store_id: int = 1, log_name: str = 'customization') -> None:
         """ this method should be override by the subclass """
         super(CustomizationHelper, self).__init__(store_id, log_name)
-        self.func_name = func_name if func_name else 'SHOPIFY_{}_ID'.format(log_name.upper())
-        self._func_id = getenv(self.func_name, None)
+        # grab this from extensions/??/shopify.extension.toml
+        self._func_handle = None
 
         # it should be 'payment or 'delivery'
         self.customization_type = 'payment'
@@ -475,10 +457,11 @@ class CustomizationHelper(ABC, BasicHelper):
         # self._variables_key = 'variables'
 
     @property
-    def func_id(self) -> str:
-        if self._func_id is None:
-            raise Exception(f'Can`t find the function[{self.func_name}] from the environment variable!')
-        return self._func_id
+    def func_handle(self) -> str:
+        if not self._func_handle:
+            # need to use to function handle to create the discount code
+            raise Exception('Function handle is not set!')
+        return self._func_handle
 
     @staticmethod
     @abstractmethod
@@ -547,7 +530,7 @@ class CustomizationHelper(ABC, BasicHelper):
     def delivery_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[list or dict]]:
         metas = self.format_metas(data)
         op = create_delivery_customization(dict(
-            function_id=self.func_id,
+            function_handle=self.func_handle,
             enabled=data['enabled'],
             title=data['title'],
             metafields=metas
@@ -619,7 +602,7 @@ class CustomizationHelper(ABC, BasicHelper):
 
     def payment_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         op = create_payment_customization(dict(
-            function_id=self.func_id,
+            function_handle=self.func_handle,
             enabled=data['enabled'],
             title=data['title'],
             metafields=self.format_metas(data)

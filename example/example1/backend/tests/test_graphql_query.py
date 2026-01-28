@@ -7,8 +7,7 @@
 # @Date    : 28/11/2024 15:07:16
 """
 from types import FunctionType
-from app.schemas.query import query_webhooks, query_delivery_customization, query_payment_customization, \
-    query_shopify_functions
+from app.schemas.query import query_webhooks, query_delivery_customization, query_payment_customization
 
 
 def test_query_webhooks(test_instance) -> None:
@@ -28,15 +27,6 @@ def test_query_delivery_customization() -> None:
 def test_query_payment_customization() -> None:
     try:
         query_payment_customization('gid://shopify/PaymentCustomization/123456', 'namespace', 'key')
-    except Exception as e:
-        assert False, e
-
-
-def test_query_shopify_functions() -> None:
-    try:
-        query_shopify_functions()
-        query_shopify_functions(10)
-        query_shopify_functions(10, 'cursor')
     except Exception as e:
         assert False, e
 

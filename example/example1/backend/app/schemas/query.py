@@ -57,14 +57,3 @@ def query_payment_customization(gid: str, namespace: str, key: str) -> Operation
     query.enabled()
     query.metafield(namespace=namespace, key=key).json_value()
     return op
-
-
-def query_shopify_functions(first: int = 25, after: str = None) -> Operation:
-    op = Operation(shopify_schema.query_type, 'QueryFunctions')
-    query = op.shopify_functions(first=first, after=after)
-    query.page_info.has_next_page()
-    query.page_info.end_cursor()
-    query.nodes.id()
-    query.nodes.title()
-    query.nodes.api_type()
-    return op

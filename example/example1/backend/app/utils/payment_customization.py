@@ -6,18 +6,16 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 31/03/2025 08:56:28
 """
-from os import getenv
 from simplejson import dumps
 # custom modules
 from app.utils.base import CustomizationHelper
 
 
 class PaymentCustomizationHelper(CustomizationHelper):
-    def __init__(self, store_id: int = 1, log_name: str = 'payment_customization', func_name: str = None) -> None:
+    def __init__(self, store_id: int = 1, log_name: str = 'payment_customization') -> None:
         super(PaymentCustomizationHelper, self).__init__(store_id, log_name)
-        self.func_name = func_name if func_name else 'SHOPIFY_PAYMENT_CUSTOMIZATION_ID'
-        self._func_id = getenv(self.func_name, None)
-
+        # grab this from extensions/??/shopify.extension.toml
+        self._func_handle = None
         self.customization_type = 'payment'
 
         # meta field
