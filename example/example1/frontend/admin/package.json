@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ownego/polaris-vue": "^2.1.33",
+    "axios": "^1.13.4",
     "pinia": "^3.0.4",
     "sweetalert2": "^11.26.17",
     "vue": "^3.5.26",
