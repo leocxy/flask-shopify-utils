@@ -96,7 +96,7 @@ def webhook_register(helper):
     topics = dict()
     common = dict(_scheme='https', _external=True)
     topics['APP_UNINSTALLED'] = dict(
-        callback_url=url_for('shopify_gdpr.shop_redact', **common),
+        uri=url_for('shopify_gdpr.shop_redact', **common),
     )
     table = PrettyTable(field_names=['Topic', 'CallbackUrl', 'Message'])
 
