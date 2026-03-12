@@ -4,7 +4,7 @@
 # @Project : flask-shopify-utils
 # @File    : base.py
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
-# @Date    : 6/10/23 4:22 pm
+# @Date    : 6/10/2023 4:22 pm
 """
 from os import path
 from logging import Formatter, Logger
@@ -25,6 +25,9 @@ from app.schemas.mutation import update_meta, create_discount_code, update_disco
     update_multiple_meta, create_delivery_customization, update_delivery_customization, \
     delete_delivery_customization, create_payment_customization, update_payment_customization, \
     delete_payment_customization
+from app.schemas.shopify import DiscountCodeAppInput, DiscountAutomaticAppInput, DeliveryCustomizationInput, \
+    PaymentCustomizationInput
+
 
 ###
 # Add custom methods here
@@ -258,8 +261,8 @@ class DiscountHelper(ABC, BasicHelper):
             rs.append('SHIPPING')
         return rs
 
-    def format_discount_code_input_data(self, record: DiscountCode) -> dict:
-        input_data = dict(
+    def format_discount_code_input_data(self, record: DiscountCode) -> DiscountCodeAppInput:
+        input_data = DiscountCodeAppInput(
             title=record.code_name,
             code=record.code_name,
             function_handle=self.func_handle,
@@ -279,8 +282,8 @@ class DiscountHelper(ABC, BasicHelper):
             input_data['ends_at'] = record.end_date.strftime("%Y-%m-%dT%H:%M:%S")
         return input_data
 
-    def format_auto_discount_code_input_data(self, record: DiscountCode) -> dict:
-        input_data = dict(
+    def format_auto_discount_code_input_data(self, record: DiscountCode) -> DiscountAutomaticAppInput:
+        input_data = DiscountAutomaticAppInput(
             combines_with=dict(
                 order_discounts=record.combine_with_order == 1,
                 product_discounts=record.combine_with_product == 1,
@@ -529,7 +532,7 @@ class CustomizationHelper(ABC, BasicHelper):
 
     def delivery_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[list or dict]]:
         metas = self.format_metas(data)
-        op = create_delivery_customization(dict(
+        op = create_delivery_customization(DeliveryCustomizationInput(
             function_handle=self.func_handle,
             enabled=data['enabled'],
             title=data['title'],
@@ -549,7 +552,7 @@ class CustomizationHelper(ABC, BasicHelper):
 
     def delivery_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or str]]:
         gid = f'gid://shopify/DeliveryCustomization/{record_id}'
-        op = update_delivery_customization(gid, dict(
+        op = update_delivery_customization(gid, DeliveryCustomizationInput(
             enabled=data['enabled'],
             title=data['title'],
         ))
@@ -601,7 +604,7 @@ class CustomizationHelper(ABC, BasicHelper):
         return True, result
 
     def payment_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
-        op = create_payment_customization(dict(
+        op = create_payment_customization(PaymentCustomizationInput(
             function_handle=self.func_handle,
             enabled=data['enabled'],
             title=data['title'],
@@ -621,7 +624,7 @@ class CustomizationHelper(ABC, BasicHelper):
 
     def payment_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         gid = f'gid://shopify/PaymentCustomization/{record_id}'
-        op = update_payment_customization(gid, dict(
+        op = update_payment_customization(gid, PaymentCustomizationInput(
             enabled=data['enabled'],
             title=data['title'],
         ))

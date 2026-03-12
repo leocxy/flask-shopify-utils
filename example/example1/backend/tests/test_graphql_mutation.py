@@ -11,8 +11,10 @@ from app.schemas.mutation import update_meta, update_multiple_meta, create_disco
     delete_discount_code, create_auto_discount, update_auto_discount, delete_auto_discount, create_webhooks, \
     revoke_webhooks, create_payment_customization, delete_payment_customization, update_payment_customization, \
     create_delivery_customization, delete_delivery_customization, update_delivery_customization
+from app.schemas.shopify import DiscountCodeAppInput, DiscountAutomaticAppInput, PaymentCustomizationInput, \
+    DeliveryCustomizationInput, MetafieldsSetInput
 
-DISCOUNT_CODE_DATA = dict(
+DISCOUNT_CODE_DATA = DiscountCodeAppInput(
     code='test_code',
     combines_with=dict(
         product_discount=True,
@@ -22,10 +24,11 @@ DISCOUNT_CODE_DATA = dict(
     applies_once_per_customer=True,
     title='test_title',
     usage_limit=10,
+    function_handle='function_handle',
     starts_at='2000-01-01T00:00:00',
 )
 
-AUTO_DISCOUNT_DATA = dict(
+AUTO_DISCOUNT_DATA = DiscountAutomaticAppInput(
     applies_on_subscription=False,
     combines_with=dict(
         product_discount=True,
@@ -33,7 +36,7 @@ AUTO_DISCOUNT_DATA = dict(
         shipping_discount=True
     ),
     starts_at='2000-01-01T00:00:00',
-    function_id='FUNCTION_ID',
+    function_handle='function_handle',
     metafields=[dict(
         namespace='namespace',
         key='key',
@@ -60,7 +63,7 @@ def test_update_meta():
 def test_update_multiple_meta():
     try:
         update_multiple_meta([
-            dict(
+            MetafieldsSetInput(
                 owner_id='gid://shopify/Customer/123456',
                 namespace='namespace',
                 key='key',
@@ -134,8 +137,8 @@ def test_revoke_webhooks():
 
 def test_create_payment_customization() -> None:
     try:
-        create_payment_customization(dict(
-            function_id='1234',
+        create_payment_customization(PaymentCustomizationInput(
+            function_handle='function_handle',
             enabled=True,
             title='title',
             metafields=[]
@@ -146,7 +149,7 @@ def test_create_payment_customization() -> None:
 
 def test_update_payment_customization() -> None:
     try:
-        update_payment_customization('gid://shopify/PaymentCustomization/1234', dict(
+        update_payment_customization('gid://shopify/PaymentCustomization/1234', PaymentCustomizationInput(
             enabled=False,
             title='title'
         ))
@@ -163,8 +166,8 @@ def test_delete_payment_customization() -> None:
 
 def test_create_delivery_customization() -> None:
     try:
-        create_delivery_customization(dict(
-            function_id='1234',
+        create_delivery_customization(DeliveryCustomizationInput(
+            function_handle='function_handle',
             enabled=True,
             title='title',
             metafields=[]
@@ -175,7 +178,7 @@ def test_create_delivery_customization() -> None:
 
 def test_update_delivery_customization() -> None:
     try:
-        update_delivery_customization('gid://shopify/DeliveryCustomization/1234', dict(
+        update_delivery_customization('gid://shopify/DeliveryCustomization/1234', DeliveryCustomizationInput(
             enabled=False,
             title='title'
         ))

@@ -43,7 +43,7 @@ class KlaviyoHelper(object):
         self._client = None
         # Custom variables
         self.token = token
-        self.version = '2025-07-15'
+        self.version = '2026-01-15'
         self.client = Session()
         self.client.headers.update({
             "Authorization": "Klaviyo-API-Key {}".format(token),
