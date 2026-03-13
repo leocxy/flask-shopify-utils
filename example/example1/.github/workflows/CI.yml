@@ -19,12 +19,12 @@ jobs:
         python-version: [ "3.9", "3.10", "3.11", "3.12" ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5.0.0
+        uses: actions/setup-node@v5
         with:
-          node-version: "20.x"
+          node-version: "22.x"
           cache: "yarn"
 
       - name: Install dependencies & Build Static Files
@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Set up Python version
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
