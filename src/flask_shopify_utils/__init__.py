@@ -22,16 +22,18 @@ from contextlib import contextmanager
 from flask import Flask, request, g, jsonify, Response, current_app, Blueprint, redirect, render_template, \
     make_response, url_for
 from jinja2 import TemplateNotFound
-from jwt import encode as jwt_encode, decode as jwt_decode, ExpiredSignatureError
+from jwt import encode as jwt_encode, decode as jwt_decode, \
+    ExpiredSignatureError, InvalidAudienceError, InvalidSignatureError, InvalidTokenError
 from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
-JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 current_time_func = None
 sqlalchemy_instance = None
+# deprecated from 0.2.6
+JWT_DATA = TypeVar('JWT_DATA', dict, Response)
 
 
 class ShopifyUtil:
@@ -128,6 +130,7 @@ class ShopifyUtil:
         value = b64encode(hmac_new(secret.encode('utf-8'), data, sha256).digest())
         return compare_digest(signature.encode('utf-8'), value)
 
+    # deprecated from 0.2.6
     def validate_jwt(self) -> Tuple[bool, JWT_DATA]:
         token = request.headers.get('Authorization', '')
         try:
@@ -144,9 +147,10 @@ class ShopifyUtil:
         bypass = self.config.get('BYPASS_VALIDATE', 0)
         if bypass == 0:
             return False, None
-        g.store_id = bypass
         g.store_key = 'local-dev-bypass.myshopify.com'
-        g.jwt_expire_time = 0
+        g.store_id = bypass
+        # deprecated since 0.2.6
+        # g.jwt_expire_time = 0
         return True, func(*args, **kwargs)
 
     def check_callback(self, func):
@@ -281,13 +285,10 @@ class ShopifyUtil:
 
             # grab `shop` from parameters
             g.store_key = request.args.get('shop', None)
-            from flask_shopify_utils.model import Store
-            store = Store.query.filter_by(key=g.store_key).first()
-            if store is None:
-                resp = self.proxy_response(401, 'Store[{}] does not exists!'.format(g.store_key))
-                resp.status_code = 401
+            rs, resp = self.check_store_record(g.store_key)
+            if not rs:
                 return resp
-            g.store_id = store.id
+            g.store_id = resp
             return func(*args, **kwargs)
 
         return decorator
@@ -329,9 +330,17 @@ class ShopifyUtil:
 
         return decorator
 
-    def check_jwt(self, func):
+    def check_store_record(self, store_domain: str) -> Tuple[bool, Optional[int or Response]]:
+        from flask_shopify_utils.model import Store
+        if store := Store.query.filter_by(key=store_domain).first():
+            return True, store.id
+        resp = self.proxy_response(401, 'Store[{}] does not exists!'.format(g.store_key))
+        resp.status_code = 401
+        return False, resp
+
+    def check_session_jwt(self, func):
         """
-        All HTTPS requests from Shopify Admin UI need to be verify
+        Check Shopify Session JWT
         :param func:
         :return: none or json
         For single endpoint use only, for example
@@ -342,12 +351,60 @@ class ShopifyUtil:
 
             utils = ShopifyUtil(current_app)
 
-            webhook_bp = Blueprint('admin_bp', __init__, url_prefix='admin')
+            admin_bp = Blueprint('admin_bp', __init__, url_prefix='admin')
 
-            @webhook_bp.route('/', methods=['GET'])
-            @utils.check_jwt
+            @admin_bp.route('/', methods=['GET'])
+            @utils.check_session_jwt
             def get_request():
                 pass
+        ```
+        """
+
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            bypass, resp = self.bypass_validate(func, args, kwargs)
+            if bypass:
+                return resp
+            token = request.headers.get('Authorization', '')
+            try:
+                decoded = jwt_decode(
+                    jwt=token[7:],
+                    key=self.config.get('SHOPIFY_API_SECRET'),
+                    algorithms=['HS256'],
+                    audience=self.config.get('SHOPIFY_API_KEY'),
+                    options=dict(
+                        require=['exp', 'iat', 'aud'],
+                        verify_exp=True,
+                        verify_iat=True,
+                        verify_aud=True,
+                    )
+                )
+            except ExpiredSignatureError:
+                return jsonify(dict(status=500, message='Session JWT expired!'))
+            except InvalidAudienceError:
+                return jsonify(dict(status=500, message='Session JWT Audience invalid!'))
+            except InvalidSignatureError:
+                return jsonify(dict(status=500, message='Session JWT Signature invalid!'))
+            except InvalidTokenError:
+                return jsonify(dict(status=500, message='Session JWT Token invalid!'))
+            except Exception as e:
+                return jsonify(dict(status=500, message=str(e)))
+            g.store_key = decoded.get('dest').replace('https://', '')
+            rs, resp = self.check_store_record(g.store_key)
+            if not rs:
+                return resp
+            g.store_id = resp
+            return func(*args, **kwargs)
+
+        return decorator
+
+    # deprecated from 0.2.6
+    def check_jwt(self, func):
+        """
+        All HTTPS requests from Shopify Admin UI need to be verify
+        :param func:
+        :return: none or json
+        For single endpoint use only, for example
         """
 
         @wraps(func)
@@ -365,6 +422,7 @@ class ShopifyUtil:
 
         return decorator
 
+    # deprecated from 0.2.6
     def create_admin_jwt_token(self) -> str:
         expire_time = datetime.utcnow() + timedelta(minutes=30)
         return jwt_encode(dict(
@@ -385,9 +443,12 @@ class ShopifyUtil:
         """
         data = data if data else []
         result = dict(status=status, message=message, data=data)
-        expire_time = int(datetime.utcnow().timestamp()) + 600
-        if g.jwt_expire_time and expire_time >= g.jwt_expire_time:
-            result['jwtToken'] = self.create_admin_jwt_token()
+        # check jwt_expire_time, it has been removed from check_session_jwt
+        expired = g.get('jwt_expire_time')
+        if expired is not None:
+            expire_time = int(datetime.utcnow().timestamp()) + 600
+            if expire_time >= expired:
+                result['jwtToken'] = self.create_admin_jwt_token()
         return jsonify(result)
 
     @classmethod

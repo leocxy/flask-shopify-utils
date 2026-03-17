@@ -43,7 +43,6 @@ const updateScopes = () => {
 }
 
 onMounted(() => {
-    $http.defaults.headers.common['Authorization'] = `Bearer ${window?.AppInfo.jwtToken}`
     if (!window.shopify) {
         showToast('Shopify App bridge does not initialize! Please open the page on Admin Panel.', {isError: true})
     } else {
