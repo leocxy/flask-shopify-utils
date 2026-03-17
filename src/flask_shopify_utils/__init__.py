@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.7'
+__version__ = '0.2.8'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -847,7 +847,7 @@ class ShopifyUtil:
         admin_routes = Blueprint('admin_default', 'default_admin_routes', url_prefix='/admin')
 
         @admin_routes.route('/test_jwt', methods=['POST', 'GET'], endpoint='test_jwt')
-        @self.check_jwt
+        @self.check_session_jwt
         def test_jwt():
             if request.method == 'GET':
                 return self.admin_response()
@@ -874,7 +874,7 @@ class ShopifyUtil:
             ))
 
         @admin_routes.route('/check/<action>', methods=['GET'], endpoint='check_scopes')
-        @self.check_jwt
+        @self.check_session_jwt
         def check_scopes(action):
             """ Check the granted scopes is update to date or not """
             if action not in ['reinstall', 'status']:

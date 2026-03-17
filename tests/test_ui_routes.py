@@ -24,7 +24,7 @@ def test_check_jwt_route(initial_test_client):
     test.assertEqual(res.status_code, 200)
     result = res.get_json()
     test.assertEqual(500, result.get('status'))
-    test.assertEqual('Not enough segments', result.get('message'))
+    test.assertEqual('Session JWT Token invalid!', result.get('message'))
     utils.config['BYPASS_VALIDATE'] = 1
     res = client.get('/admin/test_jwt')
     test.assertEqual(res.status_code, 200)
