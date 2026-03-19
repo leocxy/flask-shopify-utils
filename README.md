@@ -1,10 +1,10 @@
 # Flask-Shopify-Utils
 
-[![Python 3.9](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.9)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Amaster)
-[![Python 3.10](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.10)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Amaster)
-[![Python 3.11](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.11)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Amaster)
-[![Python 3.12](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.12)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Amaster)
-[![Python 3.13](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/PluginForFlask.yml?branch=master&label=Python%203.13)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/PluginForFlask.yml?query=branch%3Amaster)
+[![Python 3.9](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.9)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Python 3.10](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.10)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Python 3.11](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.11)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Python 3.12](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.12)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Python 3.13](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.13)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
 
 The utils for Flask Application that build for Shopify Custom App
 
@@ -18,7 +18,7 @@ $pip install -U flask-shopify-utils
 
 ## Get the sample code to start
 
-After install the "flask-shopify-utils", you should able to get the sample code by running the following command.
+After install the "flask-shopify-utils", you should get the sample code by running the following command.
  
 ```shell
 $lazy-dog
@@ -129,7 +129,7 @@ And you can find them from the `requirements` folder.
 
 ## Running the tests
 
-Make sure you have install the repository locally.
+Make sure you had installed the repository locally.
 
 ```shell
 # install the package
@@ -152,6 +152,8 @@ Make sure you have install the repository locally.
 [Packing for Python](https://packaging.python.org/en/latest/tutorials/installing-packages/)
 
 # TODO
-[] Remove state from check_callback method
-[] Remove state cookie form intall method
-Add test for `ShopifyUtil` methods
+[] - Optimize the get_version for "unstable"
+[] - Add CLI for "query_shopify_functions"
+[] - Add test for `ShopifyUtil` methods
+[] - Optimize the Graphql fetch method (don't raise exception)
+[] - Can I create the abs base class? for 'utils/base.py'
