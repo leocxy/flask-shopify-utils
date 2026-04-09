@@ -10,13 +10,13 @@
     "env": "yarn app env"
   },
   "dependencies": {
-    "@shopify/cli": "~3.88.1"
+    "@shopify/cli": "^3.92.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"
   },
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "yarn": "1.x"
   },
   "engineStrict": true,
