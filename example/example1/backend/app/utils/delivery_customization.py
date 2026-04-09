@@ -16,7 +16,7 @@ class DeliveryCustomizationHelper(CustomizationHelper):
     def __init__(self, store_id: int = 1, log_name: str = 'delivery_customization') -> None:
         super(DeliveryCustomizationHelper, self).__init__(store_id, log_name)
         # grab this from extensions/??/shopify.extension.toml
-        self._func_handle = None
+        self._func_handle = 'delivery-customization'
 
         self.customization_type = 'delivery'
 

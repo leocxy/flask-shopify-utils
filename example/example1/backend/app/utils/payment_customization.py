@@ -15,7 +15,7 @@ class PaymentCustomizationHelper(CustomizationHelper):
     def __init__(self, store_id: int = 1, log_name: str = 'payment_customization') -> None:
         super(PaymentCustomizationHelper, self).__init__(store_id, log_name)
         # grab this from extensions/??/shopify.extension.toml
-        self._func_handle = None
+        self._func_handle = 'payment-customization'
         self.customization_type = 'payment'
 
         # meta field
