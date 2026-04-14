@@ -15,7 +15,7 @@ payment_bp = Blueprint('payment_custom', __name__, url_prefix='/admin/payment-cu
 
 
 @payment_bp.route('/create', methods=['POST'], endpoint='payment_custom_create')
-@app_utils.check_jwt
+@app_utils.check_session_jwt
 def payment_custom_create():
     data = request.get_json(silent=True)
     rs, res = app_utils.form_validate(data, PaymentCustomizationHelper.get_schema(), True)
@@ -29,7 +29,7 @@ def payment_custom_create():
 
 
 @payment_bp.route('/<int:record_id>', methods=['GET', 'POST', 'DELETE'], endpoint='payment_custom_edit')
-@app_utils.check_jwt
+@app_utils.check_session_jwt
 def payment_custom_edit(record_id):
     obj = PaymentCustomizationHelper(g.store_id)
     rs, data = obj.edit(record_id)

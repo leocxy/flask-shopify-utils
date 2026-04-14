@@ -15,7 +15,7 @@ delivery_bp = Blueprint('delivery_custom', __name__, url_prefix='/admin/delivery
 
 
 @delivery_bp.route('/create', methods=['POST'], endpoint='delivery_custom_create')
-@app_utils.check_jwt
+@app_utils.check_session_jwt
 def delivery_custom_create():
     data = request.get_json(silent=True)
     rs, resp = app_utils.form_validate(data, DeliveryCustomizationHelper.get_schema(), True)
@@ -29,7 +29,7 @@ def delivery_custom_create():
 
 
 @delivery_bp.route('/<int:record_id>', methods=['GET', 'POST', 'DELETE'], endpoint='delivery_custom_edit')
-@app_utils.check_jwt
+@app_utils.check_session_jwt
 def delivery_custom_edit(record_id):
     obj = DeliveryCustomizationHelper(g.store_id)
     rs, data = obj.edit(record_id)
