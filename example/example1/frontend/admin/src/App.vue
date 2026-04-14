@@ -9,17 +9,16 @@
 <script setup>
 import {ref, onMounted, inject} from 'vue'
 import {useDefault} from "./stores/index"
-import {useRoute, useRouter} from "vue-router"
+// import {useRoute, useRouter} from "vue-router"
 import locales from '@ownego/polaris-vue/dist/locales/en.json'
 
 const $http = inject('$http')
 const store = useDefault()
-const change = ref(false)
 const title = ref('Example')
 const full_width = ref(false)
 const {getApi, errorCallback, showToast, redirectRemote} = store
-const route = useRoute()
-const router = useRouter()
+// const route = useRoute()
+// const router = useRouter()
 
 const updateTitle = (val) => title.value = val
 
@@ -38,6 +37,6 @@ onMounted(() => {
         showToast('Shopify App bridge initialized!')
     }
     // Check AccessToken
-    checkToekn()
+    checkToken()
 })
 </script>
