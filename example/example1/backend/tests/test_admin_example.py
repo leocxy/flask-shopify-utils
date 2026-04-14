@@ -24,4 +24,6 @@ def test_api_check_status(test_instance) -> None:
     # expect = dict(status=0, message='success', data=None)
     # test.assertDictEqual(rv.get_json(), expect)
     data = rv.get_json()
-    test.assertIn('https://localhost/install?shop', data['data'])
+    test.assertIn('https://localhost/install?shop', data['data']['url'])
+
+

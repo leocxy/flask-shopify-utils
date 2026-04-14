@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.9'
+__version__ = '0.2.10'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -875,7 +875,7 @@ class ShopifyUtil:
 
         @admin_routes.route('/check/reinstall', methods=['GET'], endpoint='check_scopes')
         @self.check_session_jwt
-        def reinstall_app(action):
+        def reinstall_app():
             """ Check or Get the offline access_token """
             # check record
             record = Store.query.filter_by(key=g.store_key).first()
