@@ -28,7 +28,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.8'
+__version__ = '0.2.9'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -873,38 +873,31 @@ class ShopifyUtil:
                 jwtToken=self.create_admin_jwt_token()
             ))
 
-        @admin_routes.route('/check/<action>', methods=['GET'], endpoint='check_scopes')
+        @admin_routes.route('/check/reinstall', methods=['GET'], endpoint='check_scopes')
         @self.check_session_jwt
-        def check_scopes(action):
-            """ Check the granted scopes is update to date or not """
-            if action not in ['reinstall', 'status']:
-                return self.admin_response(400, 'Action[{}] is not supported!'.format(action))
+        def reinstall_app(action):
+            """ Check or Get the offline access_token """
             # check record
-            record = Store.query.filter_by(id=g.store_id).first()
-            if record:
+            record = Store.query.filter_by(key=g.store_key).first()
+            data = dict(
+                url=url_for('shopify_default.install', shop=g.store_key, _external=True, _scheme='https')
+            )
+            if not record:
+                return self.admin_response(
+                    data=data,
+                    message='Need to Re OAuth for the offline access_token.',
+                )
+            else:
+                # check offline access_token
                 try:
                     obj = GraphQLClient(record.key, record.token)
-                    raw_query = '{ app { availableAccessScopes { handle } } }'
-                    _ = obj.fetch_data(raw_query)
+                    _ = obj.fetch_data('{ app { availableAccessScopes { handle } } }')
                 except Exception as e:
-                    if 'HTTPError 401' in e.__str__():
-                        record = None
-            if not record or action == 'reinstall':
-                shop = record.key if record else g.store_key
-                if not shop:
-                    return self.admin_response(400, 'Shop is missing from request!')
-                return self.admin_response(
-                    data=url_for('shopify_default.install', shop=shop, _external=True, _scheme='https')
-                )
-            current_scopes = self.format_api_scopes(record.scopes.lower().split(',')).split(',')
-            expected_scopes = self.format_api_scopes(self.config.get('SCOPES').lower().split(',')).split(',')
-            removes = [v for v in current_scopes if v not in expected_scopes]
-            adds = [v for v in expected_scopes if v not in current_scopes]
-            return self.admin_response(data=dict(
-                removes=removes,
-                adds=adds,
-                change=len(removes) != 0 or len(adds) != 0
-            ))
+                    return self.admin_response(
+                        data=data,
+                        message='Refresh the offline access_token. Err: {}'.format(e),
+                    )
+            return self.admin_response()
 
         self.app.register_blueprint(admin_routes)
 

@@ -2,10 +2,6 @@
     <AppProvider :i18n="locales">
         <Page :title="title" :full-width="full_width">
             <RouterView @updateTitle="updateTitle" @setFullWidth="setFullWidth"/>
-            <FooterHelp v-show="change">
-                <Link @click="updateScopes">Update</Link>
-                app scopes to get full functionality.
-            </FooterHelp>
         </Page>
     </AppProvider>
 </template>
@@ -25,20 +21,13 @@ const {getApi, errorCallback, showToast, redirectRemote} = store
 const route = useRoute()
 const router = useRouter()
 
-const checkAppScopes = () => {
-    $http.get(getApi('check', 'status')).then(({data}) => {
-        if (data?.change !== undefined) return change.value = data.change
-        return redirectRemote(data, '_top')
-    }).catch(errorCallback)
-}
-
 const updateTitle = (val) => title.value = val
 
 const setFullWidth = (val) => full_width.value = val
 
-const updateScopes = () => {
+const checkToken = () => {
     $http.get(getApi('check', 'reinstall')).then(({data}) => {
-        redirectRemote(data, '_top')
+        if (data?.url) redirectRemote(data, '_top')
     }).catch(err => errorCallback(err))
 }
 
@@ -48,7 +37,7 @@ onMounted(() => {
     } else {
         showToast('Shopify App bridge initialized!')
     }
-    // Check Update
-    checkAppScopes()
+    // Check AccessToken
+    checkToekn()
 })
 </script>

@@ -12,7 +12,7 @@ def test_admin_routes_enroll(initial_test_client):
     client, test, utils = initial_test_client
     rules = []
     for val in utils.app.url_map.iter_rules():
-        if val.rule in ['/admin/test_jwt', '/admin/check/<action>']:
+        if val.rule in ['/admin/test_jwt', '/admin/check/reinstall']:
             rules.append(val.rule)
     test.assertEqual(2, len(rules))
 
