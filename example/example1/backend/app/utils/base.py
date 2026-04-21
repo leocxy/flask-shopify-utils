@@ -26,7 +26,7 @@ from app.schemas.mutation import update_meta, create_discount_code, update_disco
     delete_delivery_customization, create_payment_customization, update_payment_customization, \
     delete_payment_customization
 from app.schemas.shopify import DiscountCodeAppInput, DiscountAutomaticAppInput, DeliveryCustomizationInput, \
-    PaymentCustomizationInput
+    PaymentCustomizationInput, DiscountCombinesWithInput, MetafieldInput
 
 
 ###
@@ -261,18 +261,18 @@ class DiscountHelper(ABC, BasicHelper):
             rs.append('SHIPPING')
         return rs
 
-    def format_discount_code_input_data(self, record: DiscountCode) -> dict:
+    def format_discount_code_input_data(self, record: DiscountCode, metas: list = None) -> DiscountCodeAppInput:
         input_data = dict(
             title=record.code_name,
             code=record.code_name,
             function_handle=self.func_handle,
             applies_once_per_customer=record.one_use_per_customer == 1,
-            combines_with=dict(
+            combines_with=DiscountCombinesWithInput(
                 order_discounts=record.combine_with_order == 1,
                 product_discounts=record.combine_with_product == 1,
                 shipping_discounts=record.combine_with_shipping == 1,
             ),
-            customer_selection=dict(all=True),
+            # customer_selection=dict(all=True),
             starts_at=record.start_date.strftime("%Y-%m-%dT%H:%M:%S"),
             discount_classes=self.get_discount_classes(),
         )
@@ -280,11 +280,14 @@ class DiscountHelper(ABC, BasicHelper):
             input_data['usage_limit'] = record.maximum_usage
         if record.end_date:
             input_data['ends_at'] = record.end_date.strftime("%Y-%m-%dT%H:%M:%S")
-        return input_data
+        if metas:
+            input_data['metafields'] = list(map(lambda meta: MetafieldInput(**meta), metas))
+        return DiscountCodeAppInput(**input_data)
 
-    def format_auto_discount_code_input_data(self, record: DiscountCode) -> dict:
+    def format_auto_discount_code_input_data(self, record: DiscountCode,
+                                             metas: list = None) -> DiscountAutomaticAppInput:
         input_data = dict(
-            combines_with=dict(
+            combines_with=DiscountCombinesWithInput(
                 order_discounts=record.combine_with_order == 1,
                 product_discounts=record.combine_with_product == 1,
                 shipping_discounts=record.combine_with_shipping == 1,
@@ -296,7 +299,9 @@ class DiscountHelper(ABC, BasicHelper):
         )
         if record.end_date:
             input_data['ends_at'] = record.end_date.strftime("%Y-%m-%dT%H:%M:%S")
-        return input_data
+        if metas:
+            input_data['metafields'] = list(map(lambda meta: MetafieldInput(**meta), metas))
+        return DiscountAutomaticAppInput(**input_data)
 
     def create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         record_data, extra_data = self.format_record_data(data)
@@ -355,9 +360,8 @@ class DiscountHelper(ABC, BasicHelper):
 
     def _create_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         metas = self.format_meta_data(data)
-        input_data = self.format_discount_code_input_data(record)
-        input_data['metafields'] = metas
-        op = create_discount_code(DiscountCodeAppInput(**input_data))
+        input_data = self.format_discount_code_input_data(record, metas)
+        op = create_discount_code(input_data)
         res = self.gql.fetch_data(op)['discountCodeAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -371,7 +375,7 @@ class DiscountHelper(ABC, BasicHelper):
     def _update_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
         owner_id = 'gid://shopify/DiscountCodeNode/{}'.format(record.code_id)
         input_data = self.format_discount_code_input_data(record)
-        op = update_discount_code(owner_id, DiscountCodeAppInput(**input_data))
+        op = update_discount_code(owner_id, input_data)
         res = self.gql.fetch_data(op)['discountCodeAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -399,9 +403,8 @@ class DiscountHelper(ABC, BasicHelper):
     def _create_auto_code(self, record: DiscountCode, data: dict) \
             -> Tuple[bool, Optional[str], Optional[dict or list]]:
         metas = self.format_meta_data(data)
-        input_data = self.format_auto_discount_code_input_data(record)
-        input_data['metafields'] = metas
-        op = create_auto_discount(DiscountAutomaticAppInput(**input_data))
+        input_data = self.format_auto_discount_code_input_data(record, metas)
+        op = create_auto_discount(input_data)
         res = self.gql.fetch_data(op)['discountAutomaticAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
@@ -416,7 +419,7 @@ class DiscountHelper(ABC, BasicHelper):
             -> Tuple[bool, Optional[str], Optional[dict or list]]:
         owner_id = 'gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id)
         input_data = self.format_auto_discount_code_input_data(record)
-        op = update_auto_discount(owner_id, DiscountAutomaticAppInput(**input_data))
+        op = update_auto_discount(owner_id, input_data)
         res = self.gql.fetch_data(op)['discountAutomaticAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
