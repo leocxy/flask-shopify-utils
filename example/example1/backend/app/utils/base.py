@@ -44,9 +44,15 @@ def fn_debug(func):
 
     @wraps(func)
     def decorator(*args, **kwargs):
-        args[0].logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:]))
+        if len(args) >= 1 and isinstance(args[0], BasicHelper):
+            logger = args[0].logger
+            is_class = True
+        else:
+            logger = app.logger
+            is_class = False
+        logger.debug('Func: {}, Kwargs: {}, Args: {}'.format(func.__name__, kwargs, args[1:] if is_class else args))
         result = func(*args, **kwargs)
-        args[0].logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
+        logger.debug('Func: {}, Result: {}'.format(func.__name__, result))
         return result
 
     return decorator
@@ -206,8 +212,7 @@ class DiscountHelper(ABC, BasicHelper):
         """
         Example
 
-        return [dict(
-            owner_id=owner_id,
+        result = [dict(
             namespace=self._ns,
             key=self._key,
             type='json',
@@ -216,6 +221,9 @@ class DiscountHelper(ABC, BasicHelper):
                 # extra add here
             ))
         )]
+        if owner_id:
+            result = list(map(lambda x: dict(owner_id=owner_id, **x), result))
+        return result
         """
         pass
 
