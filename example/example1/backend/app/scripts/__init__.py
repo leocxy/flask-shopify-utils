@@ -9,6 +9,15 @@
 
 
 def register_scripts(app):
+    """
+    Example for Azure Monitor
+    ```python
+    if getenv('APPLICATIONINSIGHTS_CONNECTION_STRING'):
+        from app.utils.telemetry import instrument_cli_blueprint
+        for bp in (webhook_cli):
+            instrument_cli_blueprint(bp)
+    ```
+    """
     pass
 
 

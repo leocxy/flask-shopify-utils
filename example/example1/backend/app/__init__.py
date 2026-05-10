@@ -24,10 +24,27 @@ app_utils = ShopifyUtil()
 
 
 def create_app(test_config: dict = None):
-    dictConfig({
-        'version': 1,
-        'root': {'level': 'DEBUG' if getenv('FLASK_DEBUG', '0') == '1' else 'INFO'}
-    })
+    azure_monitor = getenv('APPLICATIONINSIGHTS_CONNECTION_STRING')
+    if azure_monitor:
+        from azure.monitor.opentelemetry import configure_azure_monitor
+        from opentelemetry.instrumentation.flask import FlaskInstrumentor
+        configure_azure_monitor(
+            connection_string=azure_monitor,
+            resource_attributes={"service.name": "shopify-custom-app-backend"},
+            instrumentation_options={
+                "flask": {"enabled": False},
+                "azure_sdk": {"enabled": False}
+            },
+        )
+        FlaskInstrumentor().instrument_app(app)
+    else:
+        dictConfig({
+            'version': 1,
+            "disable_existing_loggers": False,
+            'root': {
+                'level': 'DEBUG' if getenv('FLASK_DEBUG', '0') == '1' else 'INFO',
+            }
+        })
     # Load Config From Object
     app.config.from_object('app.config.Config')
     # Update Testing Config

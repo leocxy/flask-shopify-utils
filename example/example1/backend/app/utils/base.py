@@ -7,7 +7,7 @@
 # @Date    : 6/10/2023 4:22 pm
 """
 from os import path
-from logging import Formatter, Logger
+from logging import Formatter, Logger, StreamHandler
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 # Request validation
@@ -59,7 +59,10 @@ def fn_debug(func):
 
 
 class BasicHelper:
-    def __init__(self, store_id: int = 1, log_name: str = 'basic_helper'):
+    HANDLER_FORMAT = '[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'
+    DEFAULT_LEVEL = 'DEBUG'
+
+    def __init__(self, store_id: int = 1, log_name: str = None):
         self._store = Store.query.filter_by(id=store_id).first()
         if not self._store:
             raise Exception('Store[{}] does not exists!'.format(store_id))
@@ -68,19 +71,20 @@ class BasicHelper:
         self._restful = None
         # Logger
         self.logger = Logger('BasicHelper')
-        handler = RotatingFileHandler(
-            path.join(app.config.get('TEMPORARY_PATH'), f'{log_name}.log'),
-            # 10 MB
-            maxBytes=10240000,
-            backupCount=5
-        )
-        handler.setFormatter(Formatter('[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'))
-        if app.config.get('FLASK_DEBUG', '1') == '1':
-            level = 'DEBUG'
-            self.logger.addHandler(app.logger.handlers[0])
+        if log_name is not None:
+            handler = RotatingFileHandler(
+                path.join(app.config.get('TEMPORARY_PATH'), f'{log_name}.log'),
+                # 10 MB
+                maxBytes=10240000,
+                backupCount=5
+            )
+            # add the default steamHandler, if exist
+            if len(app.logger.handlers) > 0:
+                self.logger.addHandler(app.logger.handlers[0])
         else:
-            level = 'INFO'
-        handler.setLevel(level)
+            handler = StreamHandler()
+        handler.setFormatter(Formatter(self.HANDLER_FORMAT))
+        handler.setLevel(self.DEFAULT_LEVEL)
         self.logger.addHandler(handler)
 
     @property
