@@ -24,6 +24,10 @@ app_utils = ShopifyUtil()
 
 
 def create_app(test_config: dict = None):
+    # Load Config From Object
+    app.config.from_object('app.config.Config')
+
+    # init azure monitor after loading config from .env
     azure_monitor = getenv('APPLICATIONINSIGHTS_CONNECTION_STRING')
     if azure_monitor:
         from azure.monitor.opentelemetry import configure_azure_monitor
@@ -45,8 +49,7 @@ def create_app(test_config: dict = None):
                 'level': 'DEBUG' if getenv('FLASK_DEBUG', '0') == '1' else 'INFO',
             }
         })
-    # Load Config From Object
-    app.config.from_object('app.config.Config')
+
     # Update Testing Config
     if test_config:
         app.config.update(test_config)
