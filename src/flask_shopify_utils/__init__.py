@@ -18,6 +18,7 @@ from requests import post as post_request
 from urllib.parse import urlencode
 from base64 import b64encode
 from contextlib import contextmanager
+from sys import platform
 # Third-party Library
 from flask import Flask, request, g, jsonify, Response, current_app, Blueprint, redirect, render_template, \
     make_response, url_for
@@ -28,7 +29,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.10'
+__version__ = '0.2.11'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -504,42 +505,34 @@ class ShopifyUtil:
     @contextmanager
     def prevent_concurrency(self, key: str = 'main'):
         """
-        Prevent concurrency request
+        Prevent concurrency request.
+
+        Note: This relies on POSIX ``fcntl.flock`` and is not supported on
+        Windows. Calling it on Windows will raise ``RuntimeError``.
+
         :param key:
         :return:
         """
-        from os import getpid, remove
-        from psutil import pid_exists, Process
-        file_path = path.join(self.config.get('BACKEND_PATH'), 'tmp', 'worker-{}.lock'.format(key))
+        if platform.startswith('win'):
+            raise RuntimeError(
+                'prevent_concurrency is not supported on Windows '
+                '(requires POSIX fcntl.flock).'
+            )
+        # Delay the import so this module remains importable on Windows.
+        from fcntl import flock, LOCK_EX, LOCK_NB, LOCK_UN
+
+        dir_path = self.config.get('TEMPORARY_PATH', '/tmp')
+        file_path = path.join(dir_path, 'worker-{}.lock'.format(key))
+        f = open(file_path, 'w')
         try:
-            if path.isfile(file_path):
-                with open(file_path, 'r') as f:
-                    pid = int(f.read())
-                    if pid_exists(pid):
-                        proc = Process(pid)
-                        run_time = int(datetime.now().timestamp()) - int(proc.create_time())
-                        if proc.status() == 'zombie' or run_time >= (3600 * 6):
-                            proc.kill()
-                        else:
-                            raise RuntimeError('{}[{}] is running'.format(key, pid))
-            with open(file_path, 'w+') as f:
-                f.write(str(getpid()))
+            try:
+                flock(f, LOCK_EX | LOCK_NB)
+            except BlockingIOError:
+                raise RuntimeError(f'{key} is already running')
             yield
-            remove(file_path)
-        except TypeError as e:
-            exc_type, exc_obj, exc_tb = exc_info()
-            print(exc_type, exc_obj, exc_tb)
-            raise e
-        except ValueError as e:
-            exc_type, exc_obj, exc_tb = exc_info()
-            print(exc_type, exc_obj, exc_tb)
-            raise e
-        except RuntimeError as e:
-            raise e
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = exc_info()
-            print(exc_type, exc_obj, exc_tb)
-            raise e
+        finally:
+            flock(f, LOCK_UN)
+            f.close()
 
     @classmethod
     def get_hash_time_format(cls, val: str):

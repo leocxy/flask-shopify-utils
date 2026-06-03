@@ -41,6 +41,8 @@ You should use Shopify CLI to pull the app configs from the root folder.
 
 # (optional) if pip-tools is installed, you can install dependencies via this comment
 >pip-sync -a requirements/index.txt
+# (optional) if you are using uv, you can install dependencies via this comment
+>uv pip sync requirements/index.txt
 
 # Run flask 
 >flask run
@@ -52,7 +54,16 @@ All python dependencies are managed by pip-tools. You can use the following comm
 
 ```shell
 
-# Install pip-tools
+# Install uv
+>pip install uv
+
+# generate dependencies file
+>uv pip compile pyproject.toml -o requirements/index.txt
+
+# Generate development dependencies file
+>uv pip compile pyproject.toml -o requirements/dev.txt --extra=dev
+
+# (deprecated) Install pip-tools
 >pip install pip-tools
 
 # Generate dependencies file
@@ -67,6 +78,8 @@ All python dependencies are managed by pip-tools. You can use the following comm
 
 ```shell
 # Install the necessary dependencies for testing
+>uv pip sync requirements/dev.txt
+# (deprecated) Install the necessary dependencies for testing
 >pip install -r requirements/dev.txt
 
 # Run all unit test
