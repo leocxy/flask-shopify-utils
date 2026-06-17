@@ -37,11 +37,22 @@ dependencies = [
     "cryptography < 50"
 ]
 
-[project.optional-dependencies]
+# UV-native dev dependency group (PEP 735).
+# Install with:
+# uv sync (includes dev by default)
+# uv sync --no-dev (production only)
+[dependency-groups]
 dev = [
     "pytest < 9",
     "flake8 < 8"
 ]
+
+# Keep the lockfile in sync automatically and prefer wheels when available.
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"

@@ -14,7 +14,7 @@ from functools import wraps
 from simplejson import dumps
 from flask_shopify_utils.utils import GraphQLClient
 from flask_shopify_utils.model import Store
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from abc import abstractmethod, ABC
 # custom modules
 from app import app, db
@@ -127,7 +127,7 @@ class BasicHelper:
         return self._restful.request(method.upper(), url, params=params, json=json_data)
 
     def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') \
-            -> Tuple[bool, Optional[str or dict]]:
+            -> Tuple[bool, Union[str, dict, None]]:
         op = update_meta(owner_id, value, namespace, key, value_type)
         res = self.gql.fetch_data(op)['metafieldsSet']
         if len(res['userErrors']) > 0:
@@ -315,7 +315,7 @@ class DiscountHelper(ABC, BasicHelper):
             input_data['metafields'] = list(map(lambda meta: MetafieldInput(**meta), metas))
         return DiscountAutomaticAppInput(**input_data)
 
-    def create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def create(self, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         record_data, extra_data = self.format_record_data(data)
         record = DiscountCode.create(
             store_id=self.store.id,
@@ -330,13 +330,13 @@ class DiscountHelper(ABC, BasicHelper):
             return self._create_code(record, data)
         return self._create_auto_code(record, data)
 
-    def edit(self, code_id: int) -> Tuple[bool, Optional[str or DiscountCode]]:
+    def edit(self, code_id: int) -> Tuple[bool, Union[str, DiscountCode, None]]:
         record = DiscountCode.query.filter_by(store_id=self.store.id, code_id=code_id).first()
         if not record:
             return False, f'DiscountNode[{code_id}] does not exists!'
         return True, record
 
-    def update(self, code_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def update(self, code_id: int, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         rs, record = self.edit(code_id)
         if not rs:
             return False, record, None
@@ -353,7 +353,7 @@ class DiscountHelper(ABC, BasicHelper):
             return self._update_code(record, data)
         return self._update_auto_code(record, data)
 
-    def delete(self, code_id: int) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def delete(self, code_id: int) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         rs, record = self.edit(code_id)
         if not rs:
             return False, record, None
@@ -370,7 +370,7 @@ class DiscountHelper(ABC, BasicHelper):
             return False, 'Update code metas failed!', res['userErrors']
         return True, None, None
 
-    def _create_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def _create_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         metas = self.format_meta_data(data)
         input_data = self.format_discount_code_input_data(record, metas)
         op = create_discount_code(input_data)
@@ -384,7 +384,7 @@ class DiscountHelper(ABC, BasicHelper):
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
-    def _update_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def _update_code(self, record: DiscountCode, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         owner_id = 'gid://shopify/DiscountCodeNode/{}'.format(record.code_id)
         input_data = self.format_discount_code_input_data(record)
         op = update_discount_code(owner_id, input_data)
@@ -401,7 +401,7 @@ class DiscountHelper(ABC, BasicHelper):
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
-    def _delete_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def _delete_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         op = delete_discount_code(record.code_id)
         res = self.gql.fetch_data(op)['discountCodeDelete']
         if len(res['userErrors']) > 0:
@@ -413,7 +413,7 @@ class DiscountHelper(ABC, BasicHelper):
         return True, None, None
 
     def _create_auto_code(self, record: DiscountCode, data: dict) \
-            -> Tuple[bool, Optional[str], Optional[dict or list]]:
+            -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         metas = self.format_meta_data(data)
         input_data = self.format_auto_discount_code_input_data(record, metas)
         op = create_auto_discount(input_data)
@@ -428,7 +428,7 @@ class DiscountHelper(ABC, BasicHelper):
         return True, None, self.record_to_dict(record)
 
     def _update_auto_code(self, record: DiscountCode, data: dict) \
-            -> Tuple[bool, Optional[str], Optional[dict or list]]:
+            -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         owner_id = 'gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id)
         input_data = self.format_auto_discount_code_input_data(record)
         op = update_auto_discount(owner_id, input_data)
@@ -445,7 +445,7 @@ class DiscountHelper(ABC, BasicHelper):
         db.session.commit()
         return True, None, self.record_to_dict(record)
 
-    def _delete_auto_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def _delete_auto_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         op = delete_auto_discount(record.code_id)
         res = self.gql.fetch_data(op)['discountAutomaticDelete']
         if len(res['userErrors']) > 0:
@@ -509,27 +509,27 @@ class CustomizationHelper(ABC, BasicHelper):
         )]
         """
 
-    def edit(self, record_id: int) -> Tuple[bool, Optional[dict or str]]:
+    def edit(self, record_id: int) -> Tuple[bool, Union[dict, str, None]]:
         """ dynamic call the method based on the customization type """
         fn = getattr(self, f'{self.customization_type}_edit')
         return fn(record_id)
 
-    def create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def create(self, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         """ dynamic call the method based on the customization type """
         fn = getattr(self, f'{self.customization_type}_create')
         return fn(data)
 
-    def update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         """ dynamic call the method based on the customization type """
         fn = getattr(self, f'{self.customization_type}_update')
         return fn(record_id, data)
 
-    def delete(self, record_id: int) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def delete(self, record_id: int) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         """ dynamic call the method based on the customization type """
         fn = getattr(self, f'{self.customization_type}_delete')
         return fn(record_id)
 
-    def delivery_edit(self, record_id: int) -> Tuple[bool, Optional[dict or str]]:
+    def delivery_edit(self, record_id: int) -> Tuple[bool, Union[dict, str, None]]:
         gid = f'gid://shopify/DeliveryCustomization/{record_id}'
         op = query_delivery_customization(gid, self._ns, self._key)
         res = self.gql.fetch_data(op)['deliveryCustomization']
@@ -545,7 +545,7 @@ class CustomizationHelper(ABC, BasicHelper):
             result.update(meta['jsonValue'])
         return True, result
 
-    def delivery_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[list or dict]]:
+    def delivery_create(self, data: dict) -> Tuple[bool, Optional[str], Union[list, dict, None]]:
         metas = self.format_metas(data)
         op = create_delivery_customization(DeliveryCustomizationInput(
             function_handle=self.func_handle,
@@ -565,7 +565,7 @@ class CustomizationHelper(ABC, BasicHelper):
             enabled=data['enabled'],
         )
 
-    def delivery_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or str]]:
+    def delivery_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Union[dict, str, None]]:
         gid = f'gid://shopify/DeliveryCustomization/{record_id}'
         op = update_delivery_customization(gid, DeliveryCustomizationInput(
             enabled=data['enabled'],
@@ -602,7 +602,7 @@ class CustomizationHelper(ABC, BasicHelper):
         self.logger.info('DeleteDeliveryCustomizationSuccess: %s', record_id)
         return True, None, None
 
-    def payment_edit(self, record_id: int) -> Tuple[bool, Optional[dict or str]]:
+    def payment_edit(self, record_id: int) -> Tuple[bool, Union[dict, str, None]]:
         gid = f'gid://shopify/PaymentCustomization/{record_id}'
         op = query_payment_customization(gid, self._ns, self._key)
         res = self.gql.fetch_data(op)['paymentCustomization']
@@ -618,7 +618,7 @@ class CustomizationHelper(ABC, BasicHelper):
             result.update(meta['jsonValue'])
         return True, result
 
-    def payment_create(self, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def payment_create(self, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         op = create_payment_customization(PaymentCustomizationInput(
             function_handle=self.func_handle,
             enabled=data['enabled'],
@@ -637,7 +637,7 @@ class CustomizationHelper(ABC, BasicHelper):
             title=data['title'],
         )
 
-    def payment_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Optional[dict or list]]:
+    def payment_update(self, record_id: int, data: dict) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         gid = f'gid://shopify/PaymentCustomization/{record_id}'
         op = update_payment_customization(gid, PaymentCustomizationInput(
             enabled=data['enabled'],
