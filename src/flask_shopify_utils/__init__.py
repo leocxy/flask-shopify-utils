@@ -29,7 +29,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.11'
+__version__ = '0.2.12'
 
 current_time_func = None
 sqlalchemy_instance = None
