@@ -1,0 +1,12 @@
+mutation CreateDeliveryCustomization {
+  deliveryCustomizationCreate(deliveryCustomization: {functionHandle: "function_handle", title: "title", enabled: true, metafields: []}) {
+    deliveryCustomization {
+      id
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}

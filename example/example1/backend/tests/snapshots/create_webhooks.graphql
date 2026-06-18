@@ -1,0 +1,8 @@
+mutation CreateWebhooks {
+  APP_UNINSTALLED: webhookSubscriptionCreate(topic: APP_UNINSTALLED, webhookSubscription: {uri: "http://127.0.0.1:500"}) {
+    userErrors {
+      field
+      message
+    }
+  }
+}

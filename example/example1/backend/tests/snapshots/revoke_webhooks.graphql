@@ -1,0 +1,8 @@
+mutation RevokeWebhooks {
+  ALIAS_ID: webhookSubscriptionDelete(id: "owner_id") {
+    userErrors {
+      field
+      message
+    }
+  }
+}

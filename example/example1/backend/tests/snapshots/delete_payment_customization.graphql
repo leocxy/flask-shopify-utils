@@ -1,0 +1,9 @@
+mutation DeletePaymentCustomization {
+  paymentCustomizationDelete(id: "gid://shopify/PaymentCustomization/1234") {
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}

@@ -1,0 +1,13 @@
+mutation UpdateCodeMeta {
+  metafieldsSet(metafields: [{ownerId: "gid://shopify/Customer/123456", namespace: "namespace", key: "key", value: "test_value", type: "single_line_text"}]) {
+    userErrors {
+      field
+      message
+      code
+      elementIndex
+    }
+    metafields {
+      id
+    }
+  }
+}

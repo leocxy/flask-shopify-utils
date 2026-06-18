@@ -1,0 +1,9 @@
+mutation UpdateDeliveryCustomization {
+  deliveryCustomizationUpdate(id: "gid://shopify/DeliveryCustomization/1234", deliveryCustomization: {title: "title", enabled: false}) {
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}

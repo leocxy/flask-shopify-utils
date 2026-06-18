@@ -1,0 +1,13 @@
+mutation CreateDiscountCode {
+  discountCodeAppCreate(codeAppDiscount: {combinesWith: {productDiscounts: true, orderDiscounts: true, shippingDiscounts: true}, title: "test_title", startsAt: "2000-01-01T00:00:00", appliesOncePerCustomer: true, code: "test_code", usageLimit: 10, functionHandle: "function_handle"}) {
+    codeAppDiscount {
+      discountId
+    }
+    userErrors {
+      field
+      message
+      code
+      extraInfo
+    }
+  }
+}

@@ -1,0 +1,9 @@
+mutation DeleteDeliveryCustomization {
+  deliveryCustomizationDelete(id: "gid://shopify/DeliveryCustomization/1234") {
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}

@@ -1,0 +1,10 @@
+mutation DeleteDiscountCode {
+  discountCodeDelete(id: "gid://shopify/DiscountCodeNode/123456") {
+    userErrors {
+      field
+      message
+      code
+      extraInfo
+    }
+  }
+}

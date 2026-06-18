@@ -1,0 +1,9 @@
+mutation UpdatePaymentCustomization {
+  paymentCustomizationUpdate(id: "gid://shopify/PaymentCustomization/1234", paymentCustomization: {title: "title", enabled: false}) {
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}

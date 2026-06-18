@@ -1,0 +1,13 @@
+mutation CreateAutoDiscount {
+  discountAutomaticAppCreate(automaticAppDiscount: {combinesWith: {productDiscounts: true, orderDiscounts: true, shippingDiscounts: true}, title: "test_title", startsAt: "2000-01-01T00:00:00", functionHandle: "function_handle", metafields: [{namespace: "namespace", key: "key", value: "test_value", type: "single_line_text"}], appliesOnSubscription: false}) {
+    userErrors {
+      field
+      message
+      code
+      extraInfo
+    }
+    automaticAppDiscount {
+      discountId
+    }
+  }
+}
