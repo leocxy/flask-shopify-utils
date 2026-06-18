@@ -21,7 +21,9 @@ class BasicMethod:
 
     @classmethod
     def create_or_update(cls, cond: dict, **kwargs) -> db.Model:
-        record = cls.query.filter_by(**cond).first()
+        record = db.session.execute(
+            db.select(cls).filter_by(**cond)
+        ).scalar_one_or_none()
         if not record:
             record = cls()
             db.session.add(record)
