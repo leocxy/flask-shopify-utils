@@ -15,13 +15,39 @@ from zipfile import ZipFile
 from io import BytesIO
 
 
+def _copy_item(source, dest):
+    """
+    Copy source to dest, overwriting same-name paths while preserving
+    destination-only files inside existing directories.
+    """
+    source = Path(source)
+    dest = Path(dest)
+
+    if source.is_dir():
+        if dest.exists() and not dest.is_dir():
+            dest.unlink()
+            copytree(source, dest)
+            return
+
+        dest.mkdir(parents=True, exist_ok=True)
+        for child in sorted(source.iterdir()):
+            _copy_item(child, dest / child.name)
+        return
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists() and dest.is_dir():
+        rmtree(dest)
+    copy2(source, dest)
+
+
 def _handle_item(source, dest, display_name):
     """
     Recursively handle a single file or directory copy with prompts.
 
     Rules:
     - File exists  -> ask "overwrite?" (Y/N).
-    - Dir exists   -> ask "overwrite the whole directory?" (Y/N).
+    - Dir exists   -> ask "overwrite files with the same names?" (Y/N).
+                      If Y -> merge-copy the directory, preserving dest-only files.
                       If N -> ask "walk into it and decide per child?" (Y/N).
                           If N -> skip the whole directory.
                           If Y -> recurse into each child.
@@ -31,11 +57,7 @@ def _handle_item(source, dest, display_name):
 
     # Destination does not exist -> copy straight through.
     if not dest.exists():
-        if source.is_dir():
-            copytree(source, dest)
-        else:
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            copy2(source, dest)
+        _copy_item(source, dest)
         echo(f'Copied "{display_name}".')
         return
 
@@ -51,10 +73,9 @@ def _handle_item(source, dest, display_name):
     # Directory conflict.
     if confirm(
         f'The directory "{display_name}" already exists. '
-        'Overwrite the whole directory?'
+        'Overwrite files with the same names?'
     ):
-        rmtree(dest)
-        copytree(source, dest)
+        _copy_item(source, dest)
         echo(f'Overwrote directory "{display_name}".')
         return
 
@@ -85,7 +106,6 @@ def copy_files(repo, directory, branch):
     """
     Copy the specified directory from the given GitHub repository to the current folder.
     """
-    repo_name = repo.rstrip('/').split('/')[-1]
     zip_url = f'{repo}/archive/refs/heads/{branch}.zip'
 
     # Download the repository zip file
@@ -94,7 +114,6 @@ def copy_files(repo, directory, branch):
         echo('Failed to download repository.')
         return
 
-    extra_folder = f'{repo_name}-master'
     target_dir = Path.cwd() / directory
 
     with TemporaryDirectory() as temp_dir:
@@ -105,11 +124,16 @@ def copy_files(repo, directory, branch):
             zip_file.extractall(temp_path)
 
         # Construct the source and destination paths.
-        source_root = temp_path / extra_folder / 'example' / 'example1'
+        source_root = None
+        for extracted_root in sorted(temp_path.iterdir()):
+            candidate = extracted_root / 'example' / 'example1'
+            if candidate.exists():
+                source_root = candidate
+                break
 
-        if not source_root.exists():
+        if source_root is None:
             echo(
-                f'Source directory "{source_root}" does not exist '
+                'Source directory "example/example1" does not exist '
                 'in the repository.'
             )
             return

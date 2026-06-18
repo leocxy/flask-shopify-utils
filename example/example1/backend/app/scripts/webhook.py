@@ -13,9 +13,8 @@ from simplejson import dumps
 from functools import wraps
 # Custom Modules
 # app.schemas.shopify should generate by `flask generate_schema`
-from app.utils.base import BasicHelper
-from app.schemas.query import query_webhooks
-from app.schemas.mutation import revoke_webhooks, create_webhooks
+from app.utils import BasicHelper
+from app.schemas import default_mutation, default_query
 
 webhook_cli = Blueprint('webhook_cli', __name__, cli_group='webhook')
 webhook_cli.cli.short_help = 'Webhook CLIs'
@@ -40,7 +39,7 @@ def webhook_list(helper):
     table = PrettyTable(field_names=['WebhookID', 'Topic', 'CallbackUrl'])
     cursor = None
     while True:
-        op = query_webhooks(cursor)
+        op = default_query.query_webhooks(cursor)
         res = helper.gql.fetch_data(op)['webhookSubscriptions']
         for node in res['nodes']:
             table.add_row([node['id'], node['topic'], node['callbackUrl']])
@@ -61,7 +60,7 @@ def webhook_revoke(helper):
     webhooks = {}
     cursor = None
     while True:
-        op = query_webhooks(cursor)
+        op = default_query.query_webhooks(cursor)
         res = helper.gql.fetch_data(op)['webhookSubscriptions']
         for node in res['nodes']:
             alias = 'ID{}'.format(node['id'].split('/')[-1])
@@ -74,7 +73,7 @@ def webhook_revoke(helper):
         return print(f'StoreID[{helper.store.id}] does not registered any webhooks')
 
     # revoke webhook
-    op = revoke_webhooks(webhooks)
+    op = default_mutation.revoke_webhooks(webhooks)
     res = helper.gql.fetch_data(op)
     for alias in webhooks:
         if alias not in res or len(res[alias]['userErrors']) != 0:
@@ -100,7 +99,7 @@ def webhook_register(helper):
     )
     table = PrettyTable(field_names=['Topic', 'CallbackUrl', 'Message'])
 
-    op = create_webhooks(topics)
+    op = default_mutation.create_webhooks(topics)
     res = helper.gql.fetch_data(op)
     for topic in topics:
         if topic not in res or len(res[topic]['userErrors']) != 0:

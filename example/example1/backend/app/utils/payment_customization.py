@@ -8,7 +8,7 @@
 """
 from simplejson import dumps
 # custom modules
-from app.utils.base import CustomizationHelper
+from app.utils import CustomizationHelper
 
 
 class PaymentCustomizationHelper(CustomizationHelper):

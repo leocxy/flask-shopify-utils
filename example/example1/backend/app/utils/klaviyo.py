@@ -15,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 from time import sleep
 # custom modules
 from app import app
-from app.utils.base import fn_debug
+from app.utils import fn_debug
 
 
 class KlaviyoHelper(object):

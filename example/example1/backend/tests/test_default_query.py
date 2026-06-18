@@ -7,7 +7,7 @@
 # @Date    : 28/11/2024 15:07:16
 """
 from types import FunctionType
-from app.schemas.query import query_webhooks, query_delivery_customization, query_payment_customization
+from app.schemas.default_query import query_webhooks, query_delivery_customization, query_payment_customization
 
 
 def test_query_webhooks(test_instance) -> None:
@@ -38,7 +38,7 @@ COVERAGE_FUNCS = [name for name, obj in locals().items() if isinstance(obj, Func
 
 
 def test_coverage_check() -> None:
-    from app.schemas import query as query_schema
+    from app.schemas import default_query as query_schema
     funcs = []
     for item in dir(query_schema):
         # exclude methods

@@ -6,7 +6,9 @@
 [![Python 3.12](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.12)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Python 3.13](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.13)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
 
-`flask-shopify-utils` is a Flask extension that provides common building blocks for Shopify custom apps: OAuth routes, HMAC and webhook validation, Shopify session-token checks, GDPR webhook routes, a GraphQL client, starter models, and a scaffold CLI.
+`flask-shopify-utils` is a Flask extension that provides common building blocks for Shopify custom apps: OAuth routes,
+HMAC and webhook validation, Shopify session-token checks, GDPR webhook routes, a GraphQL client, starter models, and a
+scaffold CLI.
 
 - [Features](#features)
 - [Installation](#installation)
@@ -48,7 +50,8 @@ The package supports Python 3.9 and newer.
 
 ## Quick start
 
-Initialize Flask-SQLAlchemy before initializing `ShopifyUtil`. The extension reads the SQLAlchemy instance from `app.extensions['sqlalchemy']` during `init_app`.
+Initialize Flask-SQLAlchemy before initializing `ShopifyUtil`. The extension reads the SQLAlchemy instance from
+`app.extensions['sqlalchemy']` during `init_app`.
 
 ```text
 from flask import Flask
@@ -86,30 +89,63 @@ See `example/` for complete sample projects.
 
 ## Starter scaffold
 
-After installing the package, run `lazy-dog` in an empty project directory to copy the reference scaffold from `example/example1`:
+`flask-shopify-utils` ships a `lazy-dog` console command that copies the reference scaffold from `example/example1` into
+your current directory. Because it is a project bootstrapper, install it globally so the command is on your `PATH` from
+any directory.
+
+### Install lazy-dog globally
+
+If you prefer plain `pip`, install into the global (user) environment:
+
+```bash
+pip install --user -U flask-shopify-utils
+```
+
+With `uv`, use `uv tool install`:
+
+```bash
+uv tool install flask-shopify-utils
+```
+
+After installation, verify the command is available:
+
+```bash
+lazy-dog --help
+```
+
+### Run the scaffold
+
+Run `lazy-dog` inside the project directory you want to populate:
 
 ```bash
 lazy-dog
 ```
 
-The command prompts before overwriting existing files or directories.
+The command downloads the repository archive, copies `example/example1/*` into the target directory, and prompts before
+overwriting existing files or directories.
+
+| Option              | Default                                         | Purpose                                          |
+|---------------------|-------------------------------------------------|--------------------------------------------------|
+| `--repo`            | `https://github.com/leocxy/flask-shopify-utils` | GitHub repository to download the scaffold from. |
+| `-d`, `--directory` | `.`                                             | Target directory to copy the scaffold into.      |
+| `-b`, `--branch`    | `master`                                        | Git branch to download.                          |
 
 ## Configuration
 
 `ShopifyUtil.init_app()` sets defaults for the following Flask config values when they are not already configured:
 
-| Key | Default | Purpose |
-|---|---|---|
-| `ROOT_PATH` | Current working directory | Base path for generated and temporary files. |
-| `BACKEND_PATH` | `<ROOT_PATH>/backend` | Backend application path used by helpers. |
-| `TEMPORARY_PATH` | `<BACKEND_PATH>/tmp` | Temporary output path. |
-| `API_VERSION` | Latest supported Shopify API version | Shopify Admin API version used by GraphQL utilities. |
-| `TIMEZONE` | `Pacific/Auckland` | Timezone for bundled model timestamps. |
-| `SHOPIFY_API_SECRET` | `CUSTOM_APP_SECRET` | Shared secret for HMAC, webhook, and token validation. |
-| `SHOPIFY_API_KEY` | `CUSTOM_APP_KEY` | Shopify app API key. |
-| `BYPASS_VALIDATE` | `0` | Local-development validation bypass. Any non-zero integer is treated as the fake store id. |
-| `DEBUG` | `False` | Flask debug flag fallback. |
-| `SCOPES` | `read_products` | OAuth scopes requested during installation. |
+| Key                  | Default                              | Purpose                                                                                    |
+|----------------------|--------------------------------------|--------------------------------------------------------------------------------------------|
+| `ROOT_PATH`          | Current working directory            | Base path for generated and temporary files.                                               |
+| `BACKEND_PATH`       | `<ROOT_PATH>/backend`                | Backend application path used by helpers.                                                  |
+| `TEMPORARY_PATH`     | `<BACKEND_PATH>/tmp`                 | Temporary output path.                                                                     |
+| `API_VERSION`        | Latest supported Shopify API version | Shopify Admin API version used by GraphQL utilities.                                       |
+| `TIMEZONE`           | `Pacific/Auckland`                   | Timezone for bundled model timestamps.                                                     |
+| `SHOPIFY_API_SECRET` | `CUSTOM_APP_SECRET`                  | Shared secret for HMAC, webhook, and token validation.                                     |
+| `SHOPIFY_API_KEY`    | `CUSTOM_APP_KEY`                     | Shopify app API key.                                                                       |
+| `BYPASS_VALIDATE`    | `0`                                  | Local-development validation bypass. Any non-zero integer is treated as the fake store id. |
+| `DEBUG`              | `False`                              | Flask debug flag fallback.                                                                 |
+| `SCOPES`             | `read_products`                      | OAuth scopes requested during installation.                                                |
 
 Set `BYPASS_VALIDATE` to `0` in production.
 
@@ -117,27 +153,29 @@ Set `BYPASS_VALIDATE` to `0` in production.
 
 Routes are opt-in. Call the enrollment methods you need after `init_app()`.
 
-| Method | Routes and behavior |
-|---|---|
-| `enroll_default_route()` | Registers `/`, `/admin`, `/install`, `/callback`, `/docs`, and a Shopify-aware `404` handler. |
-| `enroll_gdpr_route()` | Registers `/webhook/shop/redact`, `/webhook/customers/redact`, and `/webhook/customers/data_request`; requests are verified with Shopify webhook HMAC. |
-| `enroll_admin_route()` | Registers reference admin endpoints `/admin/test_jwt` and `/admin/check/reinstall`. |
-| `enroll_graphql_schema_cli()` | Registers `flask generate_schema`, which introspects a live Shopify store and emits an `sgqlc` schema module. |
+| Method                        | Routes and behavior                                                                                                                                    |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `enroll_default_route()`      | Registers `/`, `/admin`, `/install`, `/callback`, `/docs`, and a Shopify-aware `404` handler.                                                          |
+| `enroll_gdpr_route()`         | Registers `/webhook/shop/redact`, `/webhook/customers/redact`, and `/webhook/customers/data_request`; requests are verified with Shopify webhook HMAC. |
+| `enroll_admin_route()`        | Registers reference admin endpoints `/admin/test_jwt` and `/admin/check/reinstall`.                                                                    |
+| `enroll_graphql_schema_cli()` | Registers `flask generate_schema`, which introspects a live Shopify store and emits an `sgqlc` schema module.                                          |
 
 ## Authentication decorators
 
-Use the decorator that matches the Shopify surface you are handling. Successful decorators set `g.store_key` and `g.store_id` for downstream handlers.
+Use the decorator that matches the Shopify surface you are handling. Successful decorators set `g.store_key` and
+`g.store_id` for downstream handlers.
 
-| Decorator | Use case |
-|---|---|
-| `check_callback` | Shopify OAuth callback validation. |
-| `check_hmac` | Embedded-app entry validation. |
-| `check_proxy` | Shopify app proxy signature validation. |
-| `check_webhook` | Shopify webhook HMAC validation through `X-Shopify-Hmac-Sha256`. |
-| `check_session_jwt` | Shopify session-token validation from the `Authorization` header. |
-| `validate_internal_hash` | Rolling internal hash validation for proxy-style endpoints. |
+| Decorator                | Use case                                                          |
+|--------------------------|-------------------------------------------------------------------|
+| `check_callback`         | Shopify OAuth callback validation.                                |
+| `check_hmac`             | Embedded-app entry validation.                                    |
+| `check_proxy`            | Shopify app proxy signature validation.                           |
+| `check_webhook`          | Shopify webhook HMAC validation through `X-Shopify-Hmac-Sha256`.  |
+| `check_session_jwt`      | Shopify session-token validation from the `Authorization` header. |
+| `validate_internal_hash` | Rolling internal hash validation for proxy-style endpoints.       |
 
-Deprecated JWT helpers such as `check_jwt`, `validate_jwt`, and `create_admin_jwt_token` remain available for backward compatibility, but new admin endpoints should use `check_session_jwt`.
+Deprecated JWT helpers such as `check_jwt`, `validate_jwt`, and `create_admin_jwt_token` remain available for backward
+compatibility, but new admin endpoints should use `check_session_jwt`.
 
 ## Models
 
@@ -147,11 +185,13 @@ The bundled `flask_shopify_utils.model` module provides:
 - `Webhook`: webhook job/event records with status helpers.
 - `BasicMethod`: small create/update helper methods shared by the models.
 
-Because the model module uses the SQLAlchemy instance registered by `ShopifyUtil`, initialize the extension before importing these models.
+Because the model module uses the SQLAlchemy instance registered by `ShopifyUtil`, initialize the extension before
+importing these models.
 
 ## GraphQL utilities
 
-`GraphQLClient` wraps `sgqlc.endpoint.http.HTTPEndpoint`, resolves the Shopify API version through `get_version()`, and retries throttled or temporary HTTP failures.
+`GraphQLClient` wraps `sgqlc.endpoint.http.HTTPEndpoint`, resolves the Shopify API version through `get_version()`, and
+retries throttled or temporary HTTP failures.
 
 ```python
 from flask_shopify_utils.utils import GraphQLClient

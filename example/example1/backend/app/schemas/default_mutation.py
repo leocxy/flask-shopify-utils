@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 # @Project : flask-shopify-utils
-# @File    : mutation.py
+# @File    : default_mutation.py
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 28/11/2024 15:00:54
 """
@@ -10,7 +10,6 @@ from sgqlc.operation import Operation
 from app.schemas.shopify import shopify as shopify_schema, MetafieldsSetInput, \
     DiscountCodeAppInput, DiscountAutomaticAppInput, \
     WebhookSubscriptionInput, DeliveryCustomizationInput, PaymentCustomizationInput
-# custom function
 
 
 def update_meta(owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Operation:
@@ -153,5 +152,3 @@ def delete_payment_customization(gid: str) -> Operation:
     mutation = op.payment_customization_delete(id=gid)
     mutation.user_errors()
     return op
-
-# custom function

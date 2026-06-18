@@ -6,7 +6,9 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 6/06/23 4:02 pm
 """
+from typing import ClassVar
 from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy.query import Query
 from simplejson import loads, dumps
 from . import current_time_func as current_time, sqlalchemy_instance as db
 
@@ -15,6 +17,7 @@ if db is None or not isinstance(db, SQLAlchemy):
 
 
 class BasicMethod:
+    query: ClassVar[Query]
 
     @classmethod
     def create_or_update(cls, cond: dict, **kwargs) -> db.Model:

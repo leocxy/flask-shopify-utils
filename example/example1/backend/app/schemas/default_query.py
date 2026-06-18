@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 # @Project : flask-shopify-utils
-# @File    : query.py
+# @File    : default_query.py
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 28/11/2024 15:00:39
 """
 from sgqlc.operation import Operation
 from typing import TypedDict
 from typing_extensions import NotRequired
-# custom modules
 from .shopify import shopify as shopify_schema
 
 

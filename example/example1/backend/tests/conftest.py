@@ -66,9 +66,12 @@ def assert_gql():
     Generate / update them with:  UPDATE_SNAPSHOTS=1 pytest
     """
 
-    def _assert(name: str, op):
+    def _assert(name: str, op, prefix: str = None):
         SNAPSHOT_DIR.mkdir(exist_ok=True)
-        path = SNAPSHOT_DIR / '{}.graphql'.format(name)
+        if prefix:
+            path = SNAPSHOT_DIR / prefix / '{}.graphql'.format(name)
+        else:
+            path = SNAPSHOT_DIR / '{}.graphql'.format(name)
         actual = str(op).strip() + '\n'
 
         if getenv('UPDATE_SNAPSHOTS') == '1':
