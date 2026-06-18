@@ -90,4 +90,9 @@ All python dependencies are managed by pip-tools. You can use the following comm
 
 # Run a specific unit test case
 >pytest -vs test/test_app.py:test_case
+
+# for GraphQL mutation test, we are using snapshot testing to make sure the response is correct. 
+# If you want to update the snapshot, you can use the following command.
+# Regenerate snapshots for a single file
+>UPDATE_SNAPSHOTS=1 pytest -vs tests/test_graphql_mutation.py
 ```

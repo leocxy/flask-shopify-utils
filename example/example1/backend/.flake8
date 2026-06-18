@@ -2,7 +2,8 @@
 max-line-length = 120
 ignore = E501, W391
 exclude =
-	.venv,
-	migrations,
+	.venv
+	migrations
 	tmp
+	tests/conftest.py
 	app/schemas/shopify.py

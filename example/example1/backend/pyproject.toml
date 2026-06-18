@@ -37,14 +37,10 @@ dependencies = [
     "cryptography < 50"
 ]
 
-# UV-native dev dependency group (PEP 735).
-# Install with:
-# uv sync (includes dev by default)
-# uv sync --no-dev (production only)
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest < 9",
-    "flake8 < 8"
+    "flake8 < 8",
 ]
 
 # Keep the lockfile in sync automatically and prefer wheels when available.
