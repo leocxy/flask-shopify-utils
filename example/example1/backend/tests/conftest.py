@@ -9,7 +9,8 @@
 from os import getenv
 from sys import path as sys_path
 from pathlib import Path
-from pytest import fixture, skip
+from pytest import fixture
+from warnings import warn
 from unittest import TestCase
 
 # reset the system path
@@ -76,7 +77,7 @@ def assert_gql():
 
         if getenv('UPDATE_SNAPSHOTS') == '1':
             path.write_text(actual, encoding='utf-8', newline='\n')
-            skip('snapshot written: {}'.format(path.name))
+            warn('snapshot written: {}'.format(path.name), UserWarning, stacklevel=2)
 
         assert path.exists(), \
             'Missing snapshot {}. Run `UPDATE_SNAPSHOTS=1 pytest` to generate it.'.format(path.name)
