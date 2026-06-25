@@ -10,7 +10,7 @@ Changes relative to `0.2.13`.
 
 ### Changed
 
-- `GraphQLClient.fetch_data` now accepts an optional `headers` dict, forwarded to the underlying endpoint as `extra_headers`, so callers can attach per-request headers. Also added a `HTTPEndpoint` return-type annotation to the `client` property (`7191697`).
+- `GraphQLClient.fetch_data` now accepts an optional `headers` dict, forwarded to the underlying endpoint as `extra_headers`, so callers can attach per-request headers. Also added a `HTTPEndpoint` return-type annotation to the `client` property.
 
 ## [0.2.13] - 2026-06-18
 
