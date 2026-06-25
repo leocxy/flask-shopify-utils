@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.14] - 2026-06-26
+
+Changes relative to `0.2.13`.
+
+### Changed
+
+- `GraphQLClient.fetch_data` now accepts an optional `headers` dict, forwarded to the underlying endpoint as `extra_headers`, so callers can attach per-request headers. Also added a `HTTPEndpoint` return-type annotation to the `client` property (`7191697`).
+
 ## [0.2.13] - 2026-06-18
 
 Changes relative to `0.2.12`.

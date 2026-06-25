@@ -56,12 +56,12 @@ class GraphQLClient:
         self._client = HTTPEndpoint(self.url, self.headers, timeout)
 
     @property
-    def client(self):
+    def client(self) -> HTTPEndpoint:
         return self._client
 
-    def fetch_data(self, query: Operation, timeout: int = None, attempts: int = 5):
+    def fetch_data(self, query: Operation, headers: dict = None, timeout: int = None, attempts: int = 5):
         try:
-            result = self.client(query, timeout=timeout if timeout else self.timeout)
+            result = self.client(query, extra_headers=headers, timeout=timeout if timeout else self.timeout)
             if 'errors' in result.keys():
                 if result['errors'][0]['message'] == 'Throttled':
                     if attempts <= 0:
