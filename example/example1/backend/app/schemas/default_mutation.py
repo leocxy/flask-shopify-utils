@@ -6,10 +6,46 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 28/11/2024 15:00:54
 """
+from uuid import uuid4
 from sgqlc.operation import Operation
 from app.schemas.shopify import shopify as shopify_schema, MetafieldsSetInput, \
     DiscountCodeAppInput, DiscountAutomaticAppInput, \
     WebhookSubscriptionInput, DeliveryCustomizationInput, PaymentCustomizationInput
+
+
+def _inject_directive(query: str, field: str, idempotency_key: str = None) -> str:
+    """
+    SGQLC does not support @directives by default, so we have to inject them into the rendered query string.
+
+    Example:
+    ```python
+    _inject_directive(str(op), 'inventorySetQuantities', idempotency_key)
+    ```
+    """
+    directive = '@idempotent(key: "{}")'.format(idempotency_key or uuid4())
+    start = query.find(field + '(')
+    if start == -1:
+        raise ValueError('Field "{}" not found in rendered query'.format(field))
+
+    depth, in_string, escaped = 0, False, False
+    for i in range(query.index('(', start), len(query)):
+        char = query[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == '\\':
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char == '(':
+            depth += 1
+        elif char == ')':
+            depth -= 1
+            if depth == 0:
+                return '{} {}{}'.format(query[:i + 1], directive, query[i + 1:])
+    raise ValueError('Unbalanced parentheses in rendered "{}" field'.format(field))
 
 
 def update_meta(owner_id: str, value, namespace: str, key: str, value_type: str = 'json') -> Operation:

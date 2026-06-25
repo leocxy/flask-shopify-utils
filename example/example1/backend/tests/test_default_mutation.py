@@ -180,7 +180,7 @@ def test_coverage_check() -> None:
     funcs = []
     for item in dir(mutation_schema):
         # exclude methods
-        if item in ['TypedDict']:
+        if item in ['TypedDict', '_inject_directive', 'uuid4']:
             continue
         if isinstance(getattr(mutation_schema, item), FunctionType):
             fn = 'test_{}'.format(item)
