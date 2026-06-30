@@ -13,19 +13,21 @@ from app.schemas.shopify import shopify as shopify_schema, MetafieldsSetInput, \
     WebhookSubscriptionInput, DeliveryCustomizationInput, PaymentCustomizationInput
 
 
-def _inject_directive(query: str, field: str, idempotency_key: str = None) -> str:
+def _inject_directive(query: str, field: str, idempotency_key: str = None, alias: str = None) -> str:
     """
     SGQLC does not support @directives by default, so we have to inject them into the rendered query string.
 
     Example:
     ```python
     _inject_directive(str(op), 'inventorySetQuantities', idempotency_key)
+    _inject_directive(str(op), 'inventoryActivate', idempotency_key, alias='ALIAS1')
     ```
     """
     directive = '@idempotent(key: "{}")'.format(idempotency_key or uuid4())
-    start = query.find(field + '(')
+    target = '{}: {}('.format(alias, field) if alias else field + '('
+    start = query.find(target)
     if start == -1:
-        raise ValueError('Field "{}" not found in rendered query'.format(field))
+        raise ValueError('Field "{}" not found in rendered query'.format(target))
 
     depth, in_string, escaped = 0, False, False
     for i in range(query.index('(', start), len(query)):
