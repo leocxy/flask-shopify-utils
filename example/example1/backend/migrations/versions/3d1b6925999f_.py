@@ -24,9 +24,13 @@ def upgrade():
     sa.Column('domain', sa.String(length=255), nullable=True),
     sa.Column('scopes', sa.String(length=2048), nullable=False),
     sa.Column('token', sa.String(length=128), nullable=False),
+    sa.Column('token_expired_at', sa.DateTime(), nullable=True),
+    sa.Column('refresh_token', sa.String(length=128), nullable=True),
+    sa.Column('refresh_expired_at', sa.DateTime(), nullable=True),
     sa.Column('extra', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('stores', schema=None) as batch_op:

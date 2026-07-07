@@ -14,6 +14,7 @@ from sgqlc.endpoint.http import HTTPEndpoint
 from urllib.error import HTTPError, URLError
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
+from typing import Tuple, Union
 
 
 def get_version(version: str = None) -> str:
@@ -59,22 +60,26 @@ class GraphQLClient:
     def client(self) -> HTTPEndpoint:
         return self._client
 
-    def fetch_data(self, query: Operation, headers: dict = None, timeout: int = None, attempts: int = 5):
+    def fetch_data(self, query: Operation, timeout: int = None, attempts: int = 5) -> Tuple[bool, Union[str, dict]]:
+        timeout = self.timeout if timeout is None else timeout
         try:
-            result = self.client(query, extra_headers=headers, timeout=timeout if timeout else self.timeout)
+            result = self.client(query, timeout=timeout)
             if 'errors' in result.keys():
-                if result['errors'][0]['message'] == 'Throttled':
+                errors = result['errors']
+                if isinstance(errors, str) or result.get('status') == 401:
+                    return False, result
+                if errors[0]['message'] == 'Throttled':
                     if attempts <= 0:
-                        raise Exception(result)
+                        return False, result
                     sleep(2)
                     attempts -= 1
                     return self.fetch_data(query, timeout, attempts)
-                raise Exception(result)
+                return False, result
             else:
-                return result['data']
+                return True, result['data']
         except (HTTPError, URLError) as e:
             if attempts <= 0:
-                raise e
+                return False, str(e)
             sleep(1)
             attempts -= 1
             return self.fetch_data(query, timeout, attempts)

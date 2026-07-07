@@ -7,7 +7,7 @@ name = "CustomAppExample1"
 version = "0.2.0"
 readme = "README.md"
 description = "Shopify Custom app"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["Flask", "Shopify"]
 authors = [
     {email = "leo.cxy88@gmail.com"},
@@ -20,15 +20,15 @@ maintainers = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: Flask"
 ]
 dependencies = [
-    "flask-shopify-utils < 0.3.0",
+    "flask-shopify-utils < 0.4.0",
     "Flask-Migrate < 5",
     "python-dotenv < 2.0.0",
     "prettytable < 4",

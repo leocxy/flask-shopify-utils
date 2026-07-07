@@ -40,7 +40,10 @@ def webhook_list(helper):
     cursor = None
     while True:
         op = default_query.query_webhooks(cursor)
-        res = helper.gql.fetch_data(op)['webhookSubscriptions']
+        rs, res = helper.gql.fetch_data(op)
+        if not rs:
+            return print('QueryWebhooksError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+        res = res['webhookSubscriptions']
         for node in res['nodes']:
             table.add_row([node['id'], node['topic'], node['callbackUrl']])
         if res['pageInfo']['hasNextPage']:
@@ -61,7 +64,10 @@ def webhook_revoke(helper):
     cursor = None
     while True:
         op = default_query.query_webhooks(cursor)
-        res = helper.gql.fetch_data(op)['webhookSubscriptions']
+        rs, res = helper.gql.fetch_data(op)
+        if not rs:
+            return print('QueryWebhooksError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+        res = res['webhookSubscriptions']
         for node in res['nodes']:
             alias = 'ID{}'.format(node['id'].split('/')[-1])
             webhooks[alias] = dict(id=node['id'], topic=node['topic'])
@@ -74,7 +80,9 @@ def webhook_revoke(helper):
 
     # revoke webhook
     op = default_mutation.revoke_webhooks(webhooks)
-    res = helper.gql.fetch_data(op)
+    rs, res = helper.gql.fetch_data(op)
+    if not rs:
+        return print('RevokeWebhooksError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
     for alias in webhooks:
         if alias not in res or len(res[alias]['userErrors']) != 0:
             msg = 'Unknown'
@@ -100,7 +108,9 @@ def webhook_register(helper):
     table = PrettyTable(field_names=['Topic', 'CallbackUrl', 'Message'])
 
     op = default_mutation.create_webhooks(topics)
-    res = helper.gql.fetch_data(op)
+    rs, res = helper.gql.fetch_data(op)
+    if not rs:
+        return print('RegisterWebhooksError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
     for topic in topics:
         if topic not in res or len(res[topic]['userErrors']) != 0:
             msg = 'Unknown'

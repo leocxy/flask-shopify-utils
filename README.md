@@ -1,6 +1,5 @@
 # Flask-Shopify-Utils
 
-[![Python 3.9](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.9)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Python 3.10](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.10)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Python 3.11](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.11)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Python 3.12](https://img.shields.io/github/actions/workflow/status/leocxy/flask-shopify-utils/CI.yml?branch=master&label=Python%203.12)](https://github.com/leocxy/flask-shopify-utils/actions/workflows/CI.yml?query=branch%3Amaster)

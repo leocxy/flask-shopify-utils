@@ -54,9 +54,13 @@ class Store(db.Model, BasicMethod):
     domain = db.Column(db.String(255))
     scopes = db.Column(db.String(2048), nullable=False)
     token = db.Column(db.String(128), nullable=False)
+    token_expired_at = db.Column(db.DateTime, nullable=True)
+    refresh_token = db.Column(db.String(128), nullable=True)
+    refresh_expired_at = db.Column(db.DateTime, nullable=True)
     extra = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=current_time)
     updated_at = db.Column(db.DateTime, default=current_time, onupdate=current_time)
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     def get_extra(self) -> dict:
         return loads(self.extra) if self.extra else {}

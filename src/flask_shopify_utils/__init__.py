@@ -8,12 +8,13 @@
 """
 from os import path, getcwd, environ
 from sys import exc_info
-from typing import Optional, Callable, Tuple, TypeVar
+from typing import Optional, Callable, Tuple, TypeVar, Iterator
 from time import time
 from hashlib import sha256
 from functools import wraps, partial
 from hmac import new as hmac_new, compare_digest
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from requests import post as post_request
 from urllib.parse import urlencode
 from base64 import b64encode
@@ -29,7 +30,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.2.14'
+__version__ = '0.3.1'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -77,6 +78,8 @@ class ShopifyUtil:
         app.config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
         app.config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')
         app.config.setdefault('BYPASS_VALIDATE', 0)
+        app.config.setdefault('EXPIRING_TOKEN', environ.get('EXPIRING_TOKEN', '0'))
+        # deprecate in the future
         app.config.setdefault('DEBUG', False)
         app.config.setdefault('SCOPES', environ.get('SCOPES', 'read_products'))
 
@@ -666,7 +669,8 @@ class ShopifyUtil:
                 if not compare_digest(self.validate_hmac(params), request.args.get('hmac', '')):
                     return error_redirect
                 g.store_key = params.get('shop', '')
-                store = self.db.query(Store).filter_by(key=g.store_key).first()
+                cond = Store.deleted_at.is_(None)
+                store = self.db.query(Store).filter_by(key=g.store_key).filter(cond).first()
                 if not store:
                     return error_redirect
                 g.store_id = store.id
@@ -685,7 +689,8 @@ class ShopifyUtil:
             if bypass != 0:
                 g.store_id = bypass
             else:
-                store = self.db.query(Store).filter_by(key=g.store_key).first()
+                cond = Store.deleted_at.is_(None)
+                store = self.db.query(Store).filter_by(key=g.store_key).filter(cond).first()
                 g.store_id = store.id if store else 0
             # Render the Embedded App Index Page
             try:
@@ -724,11 +729,17 @@ class ShopifyUtil:
         @self.check_callback
         def callback():
             url = 'https://{}/admin/oauth/access_token'.format(g.store_key)
-            res = post_request(url, json=dict(
+            json_data = dict(
                 client_id=self.config.get('SHOPIFY_API_KEY'),
                 client_secret=self.config.get('SHOPIFY_API_SECRET'),
                 code=g.code
-            ))
+            )
+            expiring = self.config.get('EXPIRING_TOKEN') == '1'
+            if expiring:
+                json_data.update(dict(
+                    expiring=1
+                ))
+            res = post_request(url, json=json_data)
             if res.status_code != 200:
                 resp = self.proxy_response(500, 'Something went wrong while doing the OAuth!')
                 resp.status_code = 500
@@ -745,7 +756,16 @@ class ShopifyUtil:
                 resp.status_code = 500
                 return resp
             cond = dict(key=g.store_key)
-            record = Store.create_or_update(cond, domain=shop['url'].split('/')[-1], token=token, **cond)
+            record_data = dict(token=token, domain=shop['url'].split('/')[-1], deleted_at=None)
+            if expiring and data.get('refresh_token'):
+                # expiring token should be deprecated a bit earlier
+                now = self.current_time()
+                record_data.update(dict(
+                    token_expired_at=now + relativedelta(seconds=data.get('expires_in', 3600)),
+                    refresh_token=data.get('refresh_token'),
+                    refresh_expired_at=now + relativedelta(seconds=data.get('refresh_token_expires_in', 7772400)),
+                ))
+            record = Store.create_or_update(cond, **record_data, **cond)
             scopes = res.get('appInstallation', None)
             if not scopes:
                 resp = self.proxy_response(500, 'Something went wrong while fetching installation data!')
@@ -753,6 +773,7 @@ class ShopifyUtil:
                 return resp
             record.scopes = self.format_api_scopes(list(map(lambda x: x['handle'], scopes['accessScopes'])))
             self.db.commit()
+
             # Register GDPR mandatory webhook @todo
             # https://shopify.dev/docs/apps/auth/get-access-tokens/authorization-code-grant/getting-started
             return redirect('https://{}/admin/apps/{}'.format(
@@ -770,10 +791,10 @@ class ShopifyUtil:
             )
             if not rs:
                 return resp
-            # Redirect back to the Store Admin Panel for OAuth
             params = dict(
                 redirect_uri=url_for('shopify_default.callback', _scheme='https', _external=True),
                 client_id=self.config.get('SHOPIFY_API_KEY'),
+                # deprecate in the future
                 scope=self.config.get('SCOPES'),
             )
             resp = redirect('https://{}/admin/oauth/authorize?{}'.format(shop, urlencode(params)))
@@ -859,7 +880,8 @@ class ShopifyUtil:
             if bypass != 0:
                 g.store_id = bypass
             else:
-                store = self.db.query(Store).filter_by(key=g.store_key).first()
+                cond = Store.deleted_at.is_(None)
+                store = self.db.query(Store).filter_by(key=g.store_key).filter(cond).first()
                 g.store_id = store.id if store else 0
             return self.admin_response(data=dict(
                 apiKey=self.config.get('SHOPIFY_API_KEY'),
@@ -896,7 +918,7 @@ class ShopifyUtil:
 
     def enroll_graphql_schema_cli(self):
         from os import remove, getcwd, path
-        from json import dump
+        from simplejson import dump
         from click import option, echo, ClickException
         from sgqlc.endpoint.http import HTTPEndpoint
         from sgqlc.introspection import query, variables
@@ -914,7 +936,8 @@ class ShopifyUtil:
             """ Generate Shopify GraphQL schema """
             version = get_version(version)
             try:
-                store = self.db.query(Store).filter_by(id=store_id).first()
+                cond = Store.deleted_at.is_(None)
+                store = self.db.query(Store).filter_by(key=g.store_key).filter(cond).first()
                 if not store:
                     raise ClickException('Store[{}] does not exists!'.format(store_id))
             except Exception as e:
@@ -952,5 +975,58 @@ class ShopifyUtil:
             msg = 'GraphQL Schema for "{}" has been generated! \n'.format(version)
             msg += 'Please check the file: {}'.format(target_path)
             echo(msg)
+
+        @cli_bp.cli.command('refresh_expiring_token')
+        def refresh_expiring_token():
+            """ check and refresh all expiring token """
+
+            def iter_store_record() -> Iterator[Store]:
+                con1 = Store.id > 0
+                con2 = Store.refresh_token.isnot(None), Store.deleted_at.is_(None)
+                sort_by = Store.id.asc()
+                while True:
+                    record = self.db.query(Store).filter(con1, *con2).order_by(sort_by).first()
+                    if not record:
+                        break
+                    yield record
+                    con1 = Store.id > record.id
+
+            client_id = self.config.get('SHOPIFY_API_KEY')
+            client_secret = self.config.get('SHOPIFY_API_SECRET')
+
+            # check all store token
+            for record in iter_store_record():
+                now = self.current_time()
+                # check expiring token
+                future = (now + relativedelta(minutes=30)).replace(tzinfo=None)
+                if record.token_expired_at is None or future < record.token_expired_at:
+                    self.app.logger.debug('{} expiring token does not need to be refreshed.'.format(record))
+                    continue
+
+                # refresh token
+                self.app.logger.info('{} refreshing expiring token...'.format(record))
+                param = dict(
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    grant_type='refresh_token',
+                    refresh_token=record.refresh_token,
+                )
+                res = post_request('https://{}/admin/oauth/access_token'.format(record.key), json=param)
+                if res.status_code != 200:
+                    if res.status_code == 401:
+                        record.deleted_at = now
+                        self.app.logger.warning('{} has uninstall this app.'.format(record))
+                        self.db.session.commit()
+                        continue
+                    self.app.logger.warning('{} error[{}]: {}'.format(record, res.status_code, res.text))
+                    continue
+
+                res = res.json()
+                record.token = res['access_token']
+                record.token_expired_at = now + relativedelta(seconds=res.get('expires_in', 3600))
+                record.refresh_token = res.get('refresh_token')
+                record.refresh_expired_at = now + relativedelta(seconds=res.get('refresh_token_expires_in', 7772400))
+                self.app.logger.info('{} refreshed expiring token.'.format(record))
+                self.db.commit()
 
         self.app.register_blueprint(cli_bp)

@@ -131,8 +131,13 @@ class BasicHelper:
     def update_meta(self, owner_id: str, value, namespace: str, key: str, value_type: str = 'json') \
             -> Tuple[bool, Union[str, dict, None]]:
         op = update_meta(owner_id, value, namespace, key, value_type)
-        res = self.gql.fetch_data(op)['metafieldsSet']
-        if len(res['userErrors']) > 0:
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'UpdateMeta Error: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning('UpdateMetaError: %s', msg)
+            return False, msg
+        res = res['metafieldsSet']
+        if res['userErrors']:
             msg = 'UpdateMeta Error: {}'.format(dumps(res['userErrors']))
             self.logger.warning('UpdateMetaError: %s', msg)
             return False, msg
@@ -365,10 +370,15 @@ class DiscountHelper(ABC, BasicHelper):
 
     def update_metas(self, data: dict, owner_id: str) -> Tuple[bool, Optional[str], Optional[list]]:
         op = update_multiple_meta(self.format_meta_data(data, owner_id))
-        res = self.gql.fetch_data(op)['metafieldsSet']
-        if len(res['userErrors']) > 0:
-            msg = dumps(res['userErrors'])
-            self.logger.error('MetaUpdateError: %s', msg)
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'MetasUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update code metas failed.', [msg]
+        res = res['metafieldsSet']
+        if res['userErrors']:
+            msg = 'MetasUpdateError: %s'.format(dumps(res['userErrors']))
+            self.logger.warning(msg)
             return False, 'Update code metas failed!', res['userErrors']
         return True, None, None
 
@@ -376,7 +386,12 @@ class DiscountHelper(ABC, BasicHelper):
         metas = self.format_meta_data(data)
         input_data = self.format_discount_code_input_data(record, metas)
         op = create_discount_code(input_data)
-        res = self.gql.fetch_data(op)['discountCodeAppCreate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'CodeCreateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Create discount code failed!', [msg]
+        res = res['discountCodeAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('CodeCreateError: %s', msg)
@@ -390,7 +405,12 @@ class DiscountHelper(ABC, BasicHelper):
         owner_id = 'gid://shopify/DiscountCodeNode/{}'.format(record.code_id)
         input_data = self.format_discount_code_input_data(record)
         op = update_discount_code(owner_id, input_data)
-        res = self.gql.fetch_data(op)['discountCodeAppUpdate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'CodeUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update discount code failed!', [msg]
+        res = res['discountCodeAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('CodeUpdateError: %s', msg)
@@ -405,7 +425,12 @@ class DiscountHelper(ABC, BasicHelper):
 
     def _delete_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         op = delete_discount_code(record.code_id)
-        res = self.gql.fetch_data(op)['discountCodeDelete']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'DiscountCodeDeleteError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Delete discount code failed!', [msg]
+        res = res['discountCodeDelete']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('DiscountCodeDeleteError: %s', msg)
@@ -419,7 +444,12 @@ class DiscountHelper(ABC, BasicHelper):
         metas = self.format_meta_data(data)
         input_data = self.format_auto_discount_code_input_data(record, metas)
         op = create_auto_discount(input_data)
-        res = self.gql.fetch_data(op)['discountAutomaticAppCreate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'AutomaticCodeCreateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Create automatic discount code failed!', [msg]
+        res = res['discountAutomaticAppCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error(msg)
@@ -434,7 +464,12 @@ class DiscountHelper(ABC, BasicHelper):
         owner_id = 'gid://shopify/DiscountAutomaticNode/{}'.format(record.code_id)
         input_data = self.format_auto_discount_code_input_data(record)
         op = update_auto_discount(owner_id, input_data)
-        res = self.gql.fetch_data(op)['discountAutomaticAppUpdate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'AutomaticCodeUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update automatic discount code failed!', [msg]
+        res = res['discountAutomaticAppUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('AutomaticCodeUpdateError: %s', msg)
@@ -449,7 +484,12 @@ class DiscountHelper(ABC, BasicHelper):
 
     def _delete_auto_code(self, record: DiscountCode) -> Tuple[bool, Optional[str], Union[dict, list, None]]:
         op = delete_auto_discount(record.code_id)
-        res = self.gql.fetch_data(op)['discountAutomaticDelete']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'AutomaticCodeDeleteError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Delete automatic discount code failed!', [msg]
+        res = res['discountAutomaticDelete']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('AutomaticCodeDeleteError: %s', msg)
@@ -534,7 +574,12 @@ class CustomizationHelper(ABC, BasicHelper):
     def delivery_edit(self, record_id: int) -> Tuple[bool, Union[dict, str, None]]:
         gid = f'gid://shopify/DeliveryCustomization/{record_id}'
         op = query_delivery_customization(gid, self._ns, self._key)
-        res = self.gql.fetch_data(op)['deliveryCustomization']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'QueryDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, msg
+        res = res['deliveryCustomization']
         self.logger.info('QueryDeliveryCustomizationSuccess: %s', dumps(res))
         if not res:
             return False, 'Record not found!'
@@ -555,7 +600,12 @@ class CustomizationHelper(ABC, BasicHelper):
             title=data['title'],
             metafields=metas
         ))
-        res = self.gql.fetch_data(op)['deliveryCustomizationCreate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'CreateDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Create delivery customization failed!', [msg]
+        res = res['deliveryCustomizationCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('CreateDeliveryCustomizationError: %s', msg)
@@ -573,7 +623,12 @@ class CustomizationHelper(ABC, BasicHelper):
             enabled=data['enabled'],
             title=data['title'],
         ))
-        res = self.gql.fetch_data(op)['deliveryCustomizationUpdate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'UpdateDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update delivery customization failed!', [msg]
+        res = res['deliveryCustomizationUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('UpdateDeliveryCustomizationError: %s', msg)
@@ -582,7 +637,12 @@ class CustomizationHelper(ABC, BasicHelper):
         # Update Meta
         metas = self.format_metas(data, gid)
         op = update_multiple_meta(metas)
-        res = self.gql.fetch_data(op)['metafieldsSet']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'UpdateDeliveryCustomizationMetaError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update delivery customization meta failed!', [msg]
+        res = res['metafieldsSet']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('UpdateDeliveryCustomizationMetaError: %s', msg)
@@ -596,7 +656,12 @@ class CustomizationHelper(ABC, BasicHelper):
     def delivery_delete(self, record_id: int) -> Tuple[bool, Optional[str], Optional[list]]:
         gid = f'gid://shopify/DeliveryCustomization/{record_id}'
         op = delete_delivery_customization(gid)
-        res = self.gql.fetch_data(op)['deliveryCustomizationDelete']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'DeleteDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Delete delivery customization failed!', [msg]
+        res = res['deliveryCustomizationDelete']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('DeleteDeliveryCustomizationError: %s', msg)
@@ -607,7 +672,12 @@ class CustomizationHelper(ABC, BasicHelper):
     def payment_edit(self, record_id: int) -> Tuple[bool, Union[dict, str, None]]:
         gid = f'gid://shopify/PaymentCustomization/{record_id}'
         op = query_payment_customization(gid, self._ns, self._key)
-        res = self.gql.fetch_data(op)['paymentCustomization']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'QueryPaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, msg
+        res = res['paymentCustomization']
         self.logger.info('QueryPaymentCustomizationSuccess: %s', dumps(res))
         if not res:
             return False, 'Record not found!'
@@ -627,7 +697,12 @@ class CustomizationHelper(ABC, BasicHelper):
             title=data['title'],
             metafields=self.format_metas(data)
         ))
-        res = self.gql.fetch_data(op)['paymentCustomizationCreate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'CreatePaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Create payment customization failed!', [msg]
+        res = res['paymentCustomizationCreate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('CreatePaymentCustomizationError: %s', msg)
@@ -645,7 +720,12 @@ class CustomizationHelper(ABC, BasicHelper):
             enabled=data['enabled'],
             title=data['title'],
         ))
-        res = self.gql.fetch_data(op)['paymentCustomizationUpdate']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'UpdatePaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update payment customization failed!', [msg]
+        res = res['paymentCustomizationUpdate']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('UpdatePaymentCustomizationError: %s', msg)
@@ -654,7 +734,12 @@ class CustomizationHelper(ABC, BasicHelper):
         # Update meta
         metas = self.format_metas(data, gid)
         op = update_multiple_meta(metas)
-        res = self.gql.fetch_data(op)['metafieldsSet']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'UpdatePaymentCustomizationMetaError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Update payment customization meta failed!', [msg]
+        res = res['metafieldsSet']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('UpdateMetaError: %s', msg)
@@ -668,7 +753,12 @@ class CustomizationHelper(ABC, BasicHelper):
     def payment_delete(self, record_id: int) -> Tuple[bool, Optional[str], Optional[list]]:
         gid = f'gid://shopify/PaymentCustomization/{record_id}'
         op = delete_payment_customization(gid)
-        res = self.gql.fetch_data(op)['paymentCustomizationDelete']
+        rs, res = self.gql.fetch_data(op)
+        if not rs:
+            msg = 'DeletePaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            self.logger.warning(msg)
+            return False, 'Delete payment customization failed!', [msg]
+        res = res['paymentCustomizationDelete']
         if len(res['userErrors']) > 0:
             msg = dumps(res['userErrors'])
             self.logger.error('DeletePaymentCustomizationError: %s', msg)

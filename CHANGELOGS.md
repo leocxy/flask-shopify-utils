@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-07-07
+
+Changes relative to `0.2.14`.
+
+### Added
+
+- Expiring (online) access-token support in the OAuth flow, gated by the new `EXPIRING_TOKEN` config. When set to `1`, `enroll_default_route`'s install handler appends `expiring=1` to the callback `redirect_uri`, and `callback` requests an expiring token; on success it persists `refresh_token`, `token_expired_at` (now + 3600s) and `refresh_expired_at` (now + 90 days).
+- `Store` model gains four columns: `token_expired_at`, `refresh_token`, `refresh_expired_at` (expiring-token bookkeeping) and `deleted_at` (soft-delete marker).
+- `enroll_graphql_schema_cli` registers a new `flask refresh_expiring_token` command that pages through every store holding a `refresh_token`, refreshes any online token within 30 minutes of expiry via the `refresh_token` grant, and soft-deletes (sets `deleted_at`) any store whose refresh returns `401` (app uninstalled).
+- Example scaffold migration `3d1b6925999f` adds the four new `stores` columns.
+
+### Changed
+
+- **Breaking:** `GraphQLClient.fetch_data` no longer raises on error responses. It now returns `Tuple[bool, Union[str, dict]]` — `(True, data)` on success, `(False, error)` on a throttle exhaustion, GraphQL error, `401`, or `HTTPError`/`URLError`. This resolves the long-standing "make `fetch_data` non-raising" TODO. The `headers` argument added in `0.2.14` was also removed.
+- The example scaffold (`app/utils/__init__.py`, `app/scripts/webhook.py`) is updated to the new tuple contract: every `fetch_data` call now unpacks `rs, res = ...` and handles the `not rs` failure branch with a warning log and an early return.
+- Store lookups in the OAuth callback, the embedded-app entry points (`/`, `/admin`), and the schema CLI now filter on `deleted_at IS NULL`, so soft-deleted stores are treated as uninstalled.
+- Dependencies: added `python-dateutil < 3` (used for the `relativedelta` token-expiry math); relaxed the pinned `click == 8.1.8` to `click < 9` and the dev-only `build == 1.2.1` to `build < 2`.
+- `enroll_graphql_schema_cli` now serialises the introspected schema with `simplejson.dump` instead of the stdlib `json.dump`.
+
+### Removed
+
+- **Breaking:** Dropped Python 3.9 support; the minimum supported version is now 3.10 (`requires-python >= 3.10`, the CI matrix, the package classifiers, and the README badge are all updated).
+
 ## [0.2.14] - 2026-06-26
 
 Changes relative to `0.2.13`.
