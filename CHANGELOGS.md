@@ -14,6 +14,7 @@ Changes relative to `0.2.14`.
 - `Store` model gains four columns: `token_expired_at`, `refresh_token`, `refresh_expired_at` (expiring-token bookkeeping) and `deleted_at` (soft-delete marker).
 - `enroll_graphql_schema_cli` registers a new `flask refresh_expiring_token` command that pages through every store holding a `refresh_token`, refreshes any online token within 30 minutes of expiry via the `refresh_token` grant, and soft-deletes (sets `deleted_at`) any store whose refresh returns `401` (app uninstalled).
 - Example scaffold migration `3d1b6925999f` adds the four new `stores` columns.
+- The example scaffold's `app/schemas/default_mutation.py` gains a `_inject_directive` helper that splices a GraphQL `@idempotent(key: …)` directive into an sgqlc-rendered mutation string (sgqlc has no native directive support), with optional `alias` support for targeting aliased fields.
 
 ### Changed
 
