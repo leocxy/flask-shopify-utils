@@ -30,7 +30,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -765,6 +765,13 @@ class ShopifyUtil:
                     refresh_token=data.get('refresh_token'),
                     refresh_expired_at=now + relativedelta(seconds=data.get('refresh_token_expires_in', 7772400)),
                 ))
+            else:
+                if not expiring and data.get('refresh_token') is None:
+                    record_data.update(dict(
+                        token_expired_at=None,
+                        refresh_token=None,
+                        refresh_expired_at=None,
+                    ))
             record = Store.create_or_update(cond, **record_data, **cond)
             scopes = res.get('appInstallation', None)
             if not scopes:
@@ -926,9 +933,11 @@ class ShopifyUtil:
         from flask_shopify_utils.utils import get_version
         from flask_shopify_utils.model import Store
 
-        cli_bp = Blueprint('graphql_cli', 'graphql_cli', cli_group=None)
+        graphql_cli = Blueprint('graphql_cli', 'graphql_cli', cli_group=None)
+        access_token_cli = Blueprint('access_token_cli', 'graphql2_cli', cli_group='token')
+        access_token_cli.cli.short_help = 'Shopify Access Token CLIs'
 
-        @cli_bp.cli.command('generate_schema')
+        @graphql_cli.cli.command('generate_schema')
         @option('-s', '--store_id', default=1, help='Store ID')
         @option('-v', '--version', default=None, help='Schema version: 20xx-01 or 20xx-04 ...')
         @option('-d', '--with-deprecated', default=True, help='Include deprecated fields, default is True')
@@ -976,7 +985,52 @@ class ShopifyUtil:
             msg += 'Please check the file: {}'.format(target_path)
             echo(msg)
 
-        @cli_bp.cli.command('refresh_expiring_token')
+        @access_token_cli.cli.command('migrate')
+        @option('-s', '--store_id', default=1, help='Store ID')
+        def migrate_expiring_token(store_id):
+            """ migrate non-expiring access token to expiring access token, this is one-off process """
+            with self.prevent_concurrency(key='migrate_expiring_token'):
+                record = self.db.query(Store).filter_by(id=store_id).first()
+                if not record:
+                    raise ClickException('Store[{}] does not exists!'.format(store_id))
+                if record.deleted_at:
+                    raise ClickException('{}: The app has been uninstalled from the Store.'.format(record))
+                if record.refresh_token:
+                    raise ClickException('{}: This store is already using expiring tokens..'.format(record))
+
+                now = self.current_time()
+                client_id = self.config.get('SHOPIFY_API_KEY')
+                client_secret = self.config.get('SHOPIFY_API_SECRET')
+
+                self.app.logger.info('{} migrate to expiring token...'.format(record))
+                param = dict(
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    grant_type='urn:ietf:params:oauth:grant-type:token-exchange',
+                    subject_token=record.token,
+                    subject_token_type='urn:shopify:params:oauth:token-type:offline-access-token',
+                    requested_token_type='urn:shopify:params:oauth:token-type:offline-access-token',
+                    expiring=1
+                )
+                res = post_request('https://{}/admin/oauth/access_token'.format(record.key), json=param)
+                if res.status_code != 200:
+                    if res.status_code == 401:
+                        record.deleted_at = now
+                        self.app.logger.warning('{} has uninstall this app.'.format(record))
+                        self.db.session.commit()
+                        return
+                    self.app.logger.warning('{} error[{}]: {}'.format(record, res.status_code, res.text))
+                    return
+                res = res.json()
+                record.token = res['access_token']
+                record.token_expired_at = now + relativedelta(seconds=res.get('expires_in', 3600))
+                record.refresh_token = res.get('refresh_token')
+                record.refresh_expired_at = now + relativedelta(
+                    seconds=res.get('refresh_token_expires_in', 7772400))
+                self.app.logger.info('{} migrate to expiring token.'.format(record))
+                self.db.commit()
+
+        @access_token_cli.cli.command('refresh')
         def refresh_expiring_token():
             """ check and refresh all expiring token """
 
@@ -991,42 +1045,45 @@ class ShopifyUtil:
                     yield record
                     con1 = Store.id > record.id
 
-            client_id = self.config.get('SHOPIFY_API_KEY')
-            client_secret = self.config.get('SHOPIFY_API_SECRET')
+            with self.prevent_concurrency(key='refresh_expiring_token'):
+                client_id = self.config.get('SHOPIFY_API_KEY')
+                client_secret = self.config.get('SHOPIFY_API_SECRET')
 
-            # check all store token
-            for record in iter_store_record():
-                now = self.current_time()
-                # check expiring token
-                future = (now + relativedelta(minutes=30)).replace(tzinfo=None)
-                if record.token_expired_at is None or future < record.token_expired_at:
-                    self.app.logger.debug('{} expiring token does not need to be refreshed.'.format(record))
-                    continue
-
-                # refresh token
-                self.app.logger.info('{} refreshing expiring token...'.format(record))
-                param = dict(
-                    client_id=client_id,
-                    client_secret=client_secret,
-                    grant_type='refresh_token',
-                    refresh_token=record.refresh_token,
-                )
-                res = post_request('https://{}/admin/oauth/access_token'.format(record.key), json=param)
-                if res.status_code != 200:
-                    if res.status_code == 401:
-                        record.deleted_at = now
-                        self.app.logger.warning('{} has uninstall this app.'.format(record))
-                        self.db.session.commit()
+                # check all store token
+                for record in iter_store_record():
+                    now = self.current_time()
+                    # check expiring token
+                    future = (now + relativedelta(minutes=30)).replace(tzinfo=None)
+                    if record.token_expired_at is None or future < record.token_expired_at:
+                        self.app.logger.debug('{} expiring token does not need to be refreshed.'.format(record))
                         continue
-                    self.app.logger.warning('{} error[{}]: {}'.format(record, res.status_code, res.text))
-                    continue
 
-                res = res.json()
-                record.token = res['access_token']
-                record.token_expired_at = now + relativedelta(seconds=res.get('expires_in', 3600))
-                record.refresh_token = res.get('refresh_token')
-                record.refresh_expired_at = now + relativedelta(seconds=res.get('refresh_token_expires_in', 7772400))
-                self.app.logger.info('{} refreshed expiring token.'.format(record))
-                self.db.commit()
+                    # refresh token
+                    self.app.logger.info('{} refreshing expiring token...'.format(record))
+                    param = dict(
+                        client_id=client_id,
+                        client_secret=client_secret,
+                        grant_type='refresh_token',
+                        refresh_token=record.refresh_token,
+                    )
+                    res = post_request('https://{}/admin/oauth/access_token'.format(record.key), json=param)
+                    if res.status_code != 200:
+                        if res.status_code == 401:
+                            record.deleted_at = now
+                            self.app.logger.warning('{} has uninstall this app.'.format(record))
+                            self.db.session.commit()
+                            continue
+                        self.app.logger.warning('{} error[{}]: {}'.format(record, res.status_code, res.text))
+                        continue
 
-        self.app.register_blueprint(cli_bp)
+                    res = res.json()
+                    record.token = res['access_token']
+                    record.token_expired_at = now + relativedelta(seconds=res.get('expires_in', 3600))
+                    record.refresh_token = res.get('refresh_token')
+                    record.refresh_expired_at = now + relativedelta(
+                        seconds=res.get('refresh_token_expires_in', 7772400))
+                    self.app.logger.info('{} refreshed expiring token.'.format(record))
+                    self.db.commit()
+
+        self.app.register_blueprint(graphql_cli)
+        self.app.register_blueprint(access_token_cli)
