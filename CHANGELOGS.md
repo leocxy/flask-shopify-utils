@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2026-07-15
+
+Changes relative to `0.3.1`.
+
+### Added
+
+- `flask token migrate` — a one-off CLI (under the new `token` command group) that migrates a store's non-expiring (offline) access token to an expiring token via Shopify's OAuth token-exchange grant (`grant_type=urn:ietf:params:oauth:grant-type:token-exchange`). It takes `-s/--store_id`, runs under `prevent_concurrency`, and refuses to run when the store is missing, soft-deleted, or already holding a `refresh_token`; a `401` response soft-deletes the store (sets `deleted_at`).
+
+### Changed
+
+- **Breaking:** the expiring-token CLIs were regrouped under a new `token` Click group. `flask refresh_expiring_token` (added in `0.3.1`) is now `flask token refresh`; `flask generate_schema` is unchanged. Internally `enroll_graphql_schema_cli`'s single `cli_bp` blueprint was split into `graphql_cli` (schema) and `access_token_cli` (token).
+- `flask token refresh` now runs inside `prevent_concurrency` (key `refresh_expiring_token`) so overlapping runs can't refresh the same stores concurrently.
+- The OAuth `callback` now clears the expiring-token bookkeeping columns (`token_expired_at`, `refresh_token`, `refresh_expired_at` reset to `None`) when a non-expiring token is issued and the response carries no `refresh_token`, so a store downgraded from expiring back to offline tokens no longer keeps stale expiry data.
+
 ## [0.3.1] - 2026-07-07
 
 Changes relative to `0.2.14`.
