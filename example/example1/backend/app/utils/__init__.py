@@ -133,7 +133,7 @@ class BasicHelper:
         op = update_meta(owner_id, value, namespace, key, value_type)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'UpdateMeta Error: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'UpdateMeta Error: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning('UpdateMetaError: %s', msg)
             return False, msg
         res = res['metafieldsSet']
@@ -372,12 +372,12 @@ class DiscountHelper(ABC, BasicHelper):
         op = update_multiple_meta(self.format_meta_data(data, owner_id))
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'MetasUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'MetasUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update code metas failed.', [msg]
         res = res['metafieldsSet']
         if res['userErrors']:
-            msg = 'MetasUpdateError: %s'.format(dumps(res['userErrors']))
+            msg = 'MetasUpdateError: %s', dumps(res['userErrors'])
             self.logger.warning(msg)
             return False, 'Update code metas failed!', res['userErrors']
         return True, None, None
@@ -388,7 +388,7 @@ class DiscountHelper(ABC, BasicHelper):
         op = create_discount_code(input_data)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'CodeCreateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'CodeCreateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Create discount code failed!', [msg]
         res = res['discountCodeAppCreate']
@@ -407,7 +407,7 @@ class DiscountHelper(ABC, BasicHelper):
         op = update_discount_code(owner_id, input_data)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'CodeUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'CodeUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update discount code failed!', [msg]
         res = res['discountCodeAppUpdate']
@@ -427,7 +427,7 @@ class DiscountHelper(ABC, BasicHelper):
         op = delete_discount_code(record.code_id)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'DiscountCodeDeleteError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'DiscountCodeDeleteError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Delete discount code failed!', [msg]
         res = res['discountCodeDelete']
@@ -446,7 +446,7 @@ class DiscountHelper(ABC, BasicHelper):
         op = create_auto_discount(input_data)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'AutomaticCodeCreateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'AutomaticCodeCreateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Create automatic discount code failed!', [msg]
         res = res['discountAutomaticAppCreate']
@@ -466,7 +466,7 @@ class DiscountHelper(ABC, BasicHelper):
         op = update_auto_discount(owner_id, input_data)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'AutomaticCodeUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'AutomaticCodeUpdateError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update automatic discount code failed!', [msg]
         res = res['discountAutomaticAppUpdate']
@@ -486,7 +486,7 @@ class DiscountHelper(ABC, BasicHelper):
         op = delete_auto_discount(record.code_id)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'AutomaticCodeDeleteError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'AutomaticCodeDeleteError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Delete automatic discount code failed!', [msg]
         res = res['discountAutomaticDelete']
@@ -576,7 +576,8 @@ class CustomizationHelper(ABC, BasicHelper):
         op = query_delivery_customization(gid, self._ns, self._key)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'QueryDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'QueryDeliveryCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, msg
         res = res['deliveryCustomization']
@@ -602,7 +603,8 @@ class CustomizationHelper(ABC, BasicHelper):
         ))
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'CreateDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'CreateDeliveryCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Create delivery customization failed!', [msg]
         res = res['deliveryCustomizationCreate']
@@ -625,7 +627,8 @@ class CustomizationHelper(ABC, BasicHelper):
         ))
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'UpdateDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'UpdateDeliveryCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update delivery customization failed!', [msg]
         res = res['deliveryCustomizationUpdate']
@@ -639,7 +642,8 @@ class CustomizationHelper(ABC, BasicHelper):
         op = update_multiple_meta(metas)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'UpdateDeliveryCustomizationMetaError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'UpdateDeliveryCustomizationMetaError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update delivery customization meta failed!', [msg]
         res = res['metafieldsSet']
@@ -658,7 +662,8 @@ class CustomizationHelper(ABC, BasicHelper):
         op = delete_delivery_customization(gid)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'DeleteDeliveryCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'DeleteDeliveryCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Delete delivery customization failed!', [msg]
         res = res['deliveryCustomizationDelete']
@@ -674,7 +679,8 @@ class CustomizationHelper(ABC, BasicHelper):
         op = query_payment_customization(gid, self._ns, self._key)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'QueryPaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'QueryPaymentCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, msg
         res = res['paymentCustomization']
@@ -699,7 +705,8 @@ class CustomizationHelper(ABC, BasicHelper):
         ))
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'CreatePaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'CreatePaymentCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Create payment customization failed!', [msg]
         res = res['paymentCustomizationCreate']
@@ -722,7 +729,8 @@ class CustomizationHelper(ABC, BasicHelper):
         ))
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'UpdatePaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'UpdatePaymentCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update payment customization failed!', [msg]
         res = res['paymentCustomizationUpdate']
@@ -736,7 +744,8 @@ class CustomizationHelper(ABC, BasicHelper):
         op = update_multiple_meta(metas)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'UpdatePaymentCustomizationMetaError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'UpdatePaymentCustomizationMetaError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Update payment customization meta failed!', [msg]
         res = res['metafieldsSet']
@@ -755,7 +764,8 @@ class CustomizationHelper(ABC, BasicHelper):
         op = delete_payment_customization(gid)
         rs, res = self.gql.fetch_data(op)
         if not rs:
-            msg = 'DeletePaymentCustomizationError: {}'.format(dumps(res.get('errors')) if isinstance(res, dict) else res))
+            msg = 'DeletePaymentCustomizationError: {}'.format(
+                dumps(res.get('errors')) if isinstance(res, dict) else res)
             self.logger.warning(msg)
             return False, 'Delete payment customization failed!', [msg]
         res = res['paymentCustomizationDelete']
