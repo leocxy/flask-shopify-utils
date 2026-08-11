@@ -7,7 +7,7 @@ Create Date: 2023-09-11 10:51:57.007984
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 
 # revision identifiers, used by Alembic.
 revision = '3d1b6925999f'
@@ -42,7 +42,7 @@ def upgrade():
     sa.Column('webhook_id', sa.BigInteger(), nullable=True, comment='Webhook ID'),
     sa.Column('target', sa.String(length=24), nullable=True, comment='Action Target'),
     sa.Column('action', sa.String(length=24), nullable=True, comment='Action'),
-    sa.Column('data', sa.Text(length=64000), nullable=True, comment='JSON string -> 64kb medium text for MYSQL/MariaDB'),
+    sa.Column('data', sa.Text().with_variant(MEDIUMTEXT(), 'mysql'), nullable=True),
     sa.Column('remark', sa.Text(), nullable=True),
     sa.Column('status', sa.SmallInteger(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
