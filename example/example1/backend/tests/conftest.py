@@ -9,7 +9,7 @@
 from os import getenv
 from sys import path as sys_path
 from pathlib import Path
-from pytest import fixture
+from pytest import fixture, skip
 from warnings import warn
 from unittest import TestCase
 
@@ -95,6 +95,8 @@ def assert_gql():
 def klaviyo(initial):
     """  initial the klaviyo class """
     app, db, app_utils, test = initial
+    if not getenv('KLAVIYO_PRIVATE_KEY'):
+        skip('KLAVIYO_PRIVATE_KEY is not set, skipping the Klaviyo API tests.')
     from app.utils.klaviyo import KlaviyoHelper
     helper = KlaviyoHelper()
     yield helper, test
