@@ -6,16 +6,13 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 01/02/24 2:54 pm
 """
-from os import getenv, path
+from os import getenv
 from requests import Session
 from typing import Tuple, Optional
 from simplejson import dumps
-from logging import Formatter, Logger
-from logging.handlers import RotatingFileHandler
 from time import sleep
 # custom modules
-from app import app
-from app.utils import fn_debug
+from app.utils import build_logger, fn_debug
 
 
 class KlaviyoHelper(object):
@@ -24,22 +21,8 @@ class KlaviyoHelper(object):
         token = api_token if api_token else getenv('KLAVIYO_PRIVATE_KEY', None)
         if not token:
             raise Exception('Klaviyo Token is not set up yet!')
-        self.logger = Logger('KlaviyoHelper')
-        # Logger
-        self.logger = Logger('BasicHelper')
-        handler = RotatingFileHandler(
-            path.join(app.config.get('TEMPORARY_PATH'), f'{log_name}.log'),
-            maxBytes=5120000,
-            backupCount=5
-        )
-        handler.setFormatter(Formatter('[%(asctime)s] %(threadName)s %(levelname)s:%(message)s'))
-        if app.config.get('FLASK_DEBUG', '1') == '1':
-            level = 'DEBUG'
-            self.logger.addHandler(app.logger.handlers[0])
-        else:
-            level = 'INFO'
-        handler.setLevel(level)
-        self.logger.addHandler(handler)
+
+        self.logger = build_logger(log_name)
         self._client = None
         # Custom variables
         self.token = token

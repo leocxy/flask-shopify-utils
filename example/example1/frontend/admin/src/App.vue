@@ -26,7 +26,7 @@ const setFullWidth = (val) => full_width.value = val
 
 const checkToken = () => {
     $http.get(getApi('check', 'reinstall')).then(({data}) => {
-        if (data?.url) redirectRemote(data, '_top')
+        if (data?.url) redirectRemote(data.url, '_top')
     }).catch(err => errorCallback(err))
 }
 

@@ -6,8 +6,8 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 6/10/2023 4:22 pm
 """
-from os import path
-from logging import Formatter, Logger, StreamHandler
+from os import getenv, path
+from logging import Formatter, Logger, StreamHandler, getLogger
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 # Request validation
@@ -32,8 +32,49 @@ __all__ = [
     'BasicHelper',
     'CustomizationHelper',
     'DiscountHelper',
+    'build_logger',
     'fn_debug',
 ]
+
+# Azure Monitor is configured once in `create_app`, refer to `app/__init__.py`.
+# When it is on, the App Insights handler already sits on the root logger.
+USE_AZURE_MONITOR = bool(getenv('APPLICATIONINSIGHTS_CONNECTION_STRING'))
+
+
+def build_logger(log_name: str = None, level: str = 'DEBUG', max_bytes: int = 10240000) -> Logger:
+    """
+    Build the logger of a helper.
+
+    :param log_name: the helper name, `None` writes to the stream instead
+    :param level: the level of the handler, ignored when Azure Monitor is on
+    :param max_bytes: the rotating size of the log file
+    """
+    logger = getLogger('app.{}'.format(log_name or 'helper'))
+    if USE_AZURE_MONITOR:
+        # `getLogger` returns the same instance for the same name, so a handler
+        # must NOT be added here, it would stack up on every instantiation.
+        logger.setLevel(getenv('LOG_LEVEL', 'INFO'))
+        return logger
+
+    # `getLogger` is memoized, so only attach the handler on the first call
+    if logger.handlers:
+        return logger
+
+    if log_name is not None:
+        handler = RotatingFileHandler(
+            path.join(app.config.get('TEMPORARY_PATH'), '{}.log'.format(log_name)),
+            maxBytes=max_bytes,
+            backupCount=5
+        )
+        # add the default steamHandler, if exist
+        if len(app.logger.handlers) > 0:
+            logger.addHandler(app.logger.handlers[0])
+    else:
+        handler = StreamHandler()
+    handler.setFormatter(Formatter(BasicHelper.HANDLER_FORMAT))
+    handler.setLevel(level)
+    logger.addHandler(handler)
+    return logger
 
 
 # inherit from example code
@@ -71,23 +112,8 @@ class BasicHelper:
         # Shopify API
         self._gql = None
         self._restful = None
-        # Logger
-        self.logger = Logger('BasicHelper')
-        if log_name is not None:
-            handler = RotatingFileHandler(
-                path.join(app.config.get('TEMPORARY_PATH'), f'{log_name}.log'),
-                # 10 MB
-                maxBytes=10240000,
-                backupCount=5
-            )
-            # add the default steamHandler, if exist
-            if len(app.logger.handlers) > 0:
-                self.logger.addHandler(app.logger.handlers[0])
-        else:
-            handler = StreamHandler()
-        handler.setFormatter(Formatter(self.HANDLER_FORMAT))
-        handler.setLevel(self.DEFAULT_LEVEL)
-        self.logger.addHandler(handler)
+        # Logger, 10 MB per log file
+        self.logger = build_logger(log_name, self.DEFAULT_LEVEL)
 
     @property
     def store(self):
