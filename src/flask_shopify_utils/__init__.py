@@ -30,7 +30,7 @@ from cerberus.validator import Validator
 from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -946,11 +946,10 @@ class ShopifyUtil:
             version = get_version(version)
             try:
                 cond = Store.deleted_at.is_(None)
-                store = self.db.query(Store).filter_by(key=g.store_key).filter(cond).first()
+                store = self.db.query(Store).filter_by(id=store_id).filter(cond).first()
                 if not store:
                     raise ClickException('Store[{}] does not exists!'.format(store_id))
             except Exception as e:
-                print(e)
                 raise ClickException('Can`t fetch Store data from database!')
             url = 'https://{}/admin/api/{}/graphql'.format(store.key, version)
             endpoint = HTTPEndpoint(url, {'X-Shopify-Access-Token': store.token})
@@ -958,6 +957,8 @@ class ShopifyUtil:
                 include_description=False,
                 include_deprecated=with_deprecated,
             ))
+            if 'errors' in data.keys():
+                raise ClickException('GraphQL Schema fetch failed! {}'.format(data['errors']))
             json_file = 'schema.json'
             with open(json_file, 'w') as f:
                 dump(data, f, indent=4, sort_keys=True, default=str)
