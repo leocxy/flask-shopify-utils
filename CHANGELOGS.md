@@ -13,12 +13,16 @@ Changes relative to `0.3.2`.
 - `Webhook.data` is now a plain `db.Text` column (the `db.Text(64000)` length and its comment are gone), and the example scaffold's `3d1b6925999f` migration emits `sa.Text().with_variant(MEDIUMTEXT(), 'mysql')` instead. The length-based type worked only on MySQL/MariaDB; the variant keeps `MEDIUMTEXT` there while letting the same migration run on PostgreSQL (`67815e7`).
 - The example scaffold's `.github/workflows/CI.yml` now delegates to two reusable org-level workflows (`app-py-frontend-ci.yml` and `app-py-backend-ci.yml`) and carries a commented-out `extensions` job as a starting point; the previous self-contained frontend+backend pipeline is preserved as `.github/workflows/legacy.yml` (`f11a77a`).
 - The example scaffold's `backend/README.md` now states Python `^3.10`, matching the minimum set in `0.3.1` (`f11a77a`).
+- The example scaffold's Klaviyo tests no longer fail when the API key is absent: `tests/test_klaviyo.py` carries a module-level `pytestmark` skip and the `klaviyo` fixture in `tests/conftest.py` calls `skip()`, both keyed on `KLAVIYO_PRIVATE_KEY`. The hard-coded recipient and list id became `KLAVIYO_TEST_EMAIL` / `KLAVIYO_TEST_LIST_ID` overrides, and the `search_profile` call that four tests repeated is now a shared `profile_id` fixture (`d134b95`).
+- The example scaffold's logger construction moved out of `BasicHelper.__init__` into a reusable `app.utils.build_logger()`. It resolves the logger through `getLogger('app.<name>')` and attaches a handler only when the logger has none, so instantiating a helper per request no longer stacks a new `RotatingFileHandler` on every call. When `APPLICATIONINSIGHTS_CONNECTION_STRING` is set it only sets the level and leaves the Azure Monitor handler that `create_app` put on the root logger to do the shipping (`f950e06`).
 
 ### Fixed
 
-- `flask generate_schema` always failed with `Store[...] does not exists!`: it looked the store up with `filter_by(key=g.store_key)`, but `g.store_key` is never set in a CLI context. It now filters on `id=store_id`, the value the `-s/--store_id` option supplies (`3b5f0cf`).
-- `flask generate_schema` now raises a `ClickException` when the introspection response contains `errors`, instead of writing an error payload to `schema.json` and failing later inside `sgqlc.codegen`. The stray `print(e)` in the store-lookup failure path was also removed (`3b5f0cf`).
+- `flask generate_schema` always failed with `Store[...] does not exists!`: it looked the store up with `filter_by(key=g.store_key)`, but `g.store_key` is never set in a CLI context. It now filters on `id=store_id`, the value the `-s/--store_id` option supplies (`18baf26`).
+- `flask generate_schema` now raises a `ClickException` when the introspection response contains `errors`, instead of writing an error payload to `schema.json` and failing later inside `sgqlc.codegen`. The stray `print(e)` in the store-lookup failure path was also removed (`18baf26`).
 - Fixed unbalanced parentheses in the example scaffold's `app/utils/__init__.py`, introduced with the `0.3.1` `fetch_data` tuple contract. Every `if not rs:` error branch carried an extra `)`, which made the module fail to import (`f11a77a`).
+- The example scaffold's admin UI never redirected on reinstall: `App.vue`'s `checkToken` passed the whole response body to `redirectRemote()` instead of `data.url` (`f950e06`).
+- `KlaviyoHelper` built its logger twice — the second one named `BasicHelper`, discarding the first — and reached for the module-level `app` object to place its log file. Both are gone now that it calls `build_logger(log_name)` (`f950e06`).
 
 ## [0.3.2] - 2026-07-15
 
