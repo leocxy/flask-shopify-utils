@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2026-09-03
+
+Changes relative to `0.3.2`.
+
+### Changed
+
+- `Webhook.data` is now a plain `db.Text` column (the `db.Text(64000)` length and its comment are gone), and the example scaffold's `3d1b6925999f` migration emits `sa.Text().with_variant(MEDIUMTEXT(), 'mysql')` instead. The length-based type worked only on MySQL/MariaDB; the variant keeps `MEDIUMTEXT` there while letting the same migration run on PostgreSQL (`67815e7`).
+- The example scaffold's `.github/workflows/CI.yml` now delegates to two reusable org-level workflows (`app-py-frontend-ci.yml` and `app-py-backend-ci.yml`) and carries a commented-out `extensions` job as a starting point; the previous self-contained frontend+backend pipeline is preserved as `.github/workflows/legacy.yml` (`f11a77a`).
+- The example scaffold's `backend/README.md` now states Python `^3.10`, matching the minimum set in `0.3.1` (`f11a77a`).
+
+### Fixed
+
+- `flask generate_schema` always failed with `Store[...] does not exists!`: it looked the store up with `filter_by(key=g.store_key)`, but `g.store_key` is never set in a CLI context. It now filters on `id=store_id`, the value the `-s/--store_id` option supplies (`3b5f0cf`).
+- `flask generate_schema` now raises a `ClickException` when the introspection response contains `errors`, instead of writing an error payload to `schema.json` and failing later inside `sgqlc.codegen`. The stray `print(e)` in the store-lookup failure path was also removed (`3b5f0cf`).
+- Fixed unbalanced parentheses in the example scaffold's `app/utils/__init__.py`, introduced with the `0.3.1` `fetch_data` tuple contract. Every `if not rs:` error branch carried an extra `)`, which made the module fail to import (`f11a77a`).
+
 ## [0.3.2] - 2026-07-15
 
 Changes relative to `0.3.1`.
