@@ -6,8 +6,10 @@
 # @Author  : Leo Chen<leo.cxy88@gmail.com>
 # @Date    : 27/05/23 3:16 pm
 """
+from re import match as re_match
 from os import environ
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from time import sleep
 from sgqlc.operation import Operation
 from sgqlc.endpoint.http import HTTPEndpoint
@@ -16,33 +18,41 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from typing import Tuple, Union
 
+VERSION_KEY = 'API_VERSION'
+
 
 def get_version(version: str = None) -> str:
     """ Get Shopify API Version """
     # Get Latest version of GraphQL
     today = datetime.today()
-    month = int(today.strftime('%-m'))
+    month = int(today.strftime('%m'))
     for v in [10, 7, 4, 1]:
         if month >= v:
             month = v
             break
-    latest_version = int('{}{:02d}'.format(today.strftime('%Y'), month))
-    version = environ.get('API_VERSION', '2023-04') if not version else version
+    latest_date = int('{}{:02d}'.format(today.strftime('%Y'), month))
+    earliest_date = int('{}{:02d}'.format((today - relativedelta(years=1)).strftime('%Y'), month))
+    latest_version = '{}-{:02d}'.format(today.strftime('%Y'), month)
+
+    # validate the version format: "xxxx-xx", all digits, first digit 1-9
+    force = False
     if version:
-        version = int(version.replace('-', ''))
-        # check version exists or not
-        if version > latest_version:
-            version = latest_version
-        else:
-            # Check deprecate
-            if latest_version - 100 > version:
-                version = latest_version
+        val = version
+        force = True
     else:
-        version = latest_version
-    version = str(version)
-    version = '{}-{}'.format(version[:4], version[-2:])
+        val = environ.get(VERSION_KEY, '2026-04')
+    if not re_match(r'^[1-9]\d{3}-\d{2}$', val):
+        raise ValueError('Invalid API version format: {}'.format(val))
+    val_date = int(val.replace('-', ''))
+
+    # Check if the version is within the valid range
+    if val_date > latest_date or val_date < earliest_date:
+        version = latest_version if force is False else val
+    else:
+        version = val
+
     # Set Environment variable
-    environ['API_VERSION'] = version
+    environ[VERSION_KEY] = version
     return version
 
 
