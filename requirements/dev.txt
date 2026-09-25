@@ -87,8 +87,6 @@ pytest==8.4.2
     # via flask-shopify-utils (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via flask-shopify-utils (pyproject.toml)
-pytz==2026.1.post1
-    # via flask-shopify-utils (pyproject.toml)
 readme-renderer==46.0
     # via twine
 requests==2.34.2
@@ -114,6 +112,8 @@ twine==7.0.0
     # via flask-shopify-utils (pyproject.toml)
 typing-extensions==4.16.0
     # via sqlalchemy
+tzdata==2026.4
+    # via flask-shopify-utils (pyproject.toml)
 urllib3==2.7.0
     # via
     #   id

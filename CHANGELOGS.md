@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.4] - 2026-09-25
+
+Changes relative to `0.3.3`.
+
+### Changed
+
+- The default `TIMEZONE` is now `zoneinfo.ZoneInfo('Pacific/Auckland')` instead of a `pytz` timezone, and `tzdata` was added as a dependency so `ZoneInfo` still resolves IANA zones on hosts without a system tz database (Windows, Alpine). `current_time()` passes the value straight to `datetime.now()`, so a `TIMEZONE` that a project already sets to a `pytz` object keeps working.
+- **Breaking:** `get_version()` now validates its input against `YYYY-MM` (first digit 1–9) and raises `ValueError('Invalid API version format: ...')` otherwise, for both the `version` argument and the `API_VERSION` environment variable. Because `init_app` calls `get_version()`, an empty or malformed `API_VERSION` (e.g. `API_VERSION=` in `.env`) now fails at startup instead of silently falling back to the latest release (`debb43d`).
+- `get_version(version)` now returns an explicitly passed version as-is, even outside the supported window; previously it was clamped to the latest release. The one-year window and the fallback to the latest Jan/Apr/Jul/Oct release now apply only to the `API_VERSION` environment variable, so `flask generate_schema -v` accepts any well-formed version (`debb43d`).
+- When `API_VERSION` is unset, `get_version()` falls back to `2026-04` instead of `2023-04`. The old default was always outside the one-year window and so always resolved to the latest release; `2026-04` is used as-is until it ages out (`debb43d`).
+- The `dev` extra now pins `twine == 7.0.0` (`7bdd7e4`).
+- The example scaffold's `app/config.py` builds `TIMEZONE` with `zoneinfo.ZoneInfo`, its `pyproject.toml` now requires `flask-shopify-utils >= 0.3.4, < 0.4.0`, and `requirements/index.txt` / `requirements/dev.txt` were regenerated (`pytz` dropped, `tzdata` added).
+
+### Removed
+
+- **Breaking:** `pytz` is no longer a dependency. Projects scaffolded by `lazy-dog` before this release import it in `app/config.py` (`from pytz import timezone`) but only had it installed transitively through this package, so they fail with `ModuleNotFoundError: No module named 'pytz'` once their lock file is regenerated against `0.3.4`. Either switch `app/config.py` to `from zoneinfo import ZoneInfo` and `TIMEZONE = ZoneInfo(getenv('TIMEZONE', 'Pacific/Auckland'))`, or add `pytz` to the project's own dependencies.
+
+### Fixed
+
+- `get_version()` crashed on Windows: it formatted the month with `strftime('%-m')`, a glibc/BSD extension that the Windows C runtime rejects. It now uses `%m` (`debb43d`).
+
 ## [0.3.3] - 2026-09-03
 
 Changes relative to `0.3.2`.

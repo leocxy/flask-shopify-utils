@@ -20,6 +20,7 @@ from urllib.parse import urlencode
 from base64 import b64encode
 from contextlib import contextmanager
 from sys import platform
+from zoneinfo import ZoneInfo
 # Third-party Library
 from flask import Flask, request, g, jsonify, Response, current_app, Blueprint, redirect, render_template, \
     make_response, url_for
@@ -27,10 +28,9 @@ from jinja2 import TemplateNotFound
 from jwt import encode as jwt_encode, decode as jwt_decode, \
     ExpiredSignatureError, InvalidAudienceError, InvalidSignatureError, InvalidTokenError
 from cerberus.validator import Validator
-from pytz import timezone
 from flask_shopify_utils.utils import get_version, GraphQLClient
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 current_time_func = None
 sqlalchemy_instance = None
@@ -74,7 +74,7 @@ class ShopifyUtil:
         app.config.setdefault('BACKEND_PATH', path.join(app.config.get('ROOT_PATH'), 'backend'))
         app.config.setdefault('TEMPORARY_PATH', path.join(app.config.get('BACKEND_PATH'), 'tmp'))
         app.config.setdefault('API_VERSION', get_version())
-        app.config.setdefault('TIMEZONE', timezone('Pacific/Auckland'))
+        app.config.setdefault('TIMEZONE', ZoneInfo('Pacific/Auckland'))
         app.config.setdefault('SHOPIFY_API_SECRET', 'CUSTOM_APP_SECRET')
         app.config.setdefault('SHOPIFY_API_KEY', 'CUSTOM_APP_KEY')
         app.config.setdefault('BYPASS_VALIDATE', 0)

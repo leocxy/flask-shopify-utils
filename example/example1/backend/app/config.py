@@ -8,7 +8,7 @@
 """
 from os import getenv
 from os.path import dirname, join, abspath
-from pytz import timezone
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv, dotenv_values
 from glob import glob
 
@@ -46,7 +46,7 @@ class Config:
     ROOT_PATH = ROOT_PATH
     BACKEND_PATH = join(ROOT_PATH, 'backend')
     TEMPORARY_PATH = join(BACKEND_PATH, 'tmp')
-    TIMEZONE = timezone(getenv('TIMEZONE', 'Pacific/Auckland'))
+    TIMEZONE = ZoneInfo(getenv('TIMEZONE', 'Pacific/Auckland'))
     BYPASS_VALIDATE = int(getenv('BYPASS_VALIDATE', 0))
     SHOPIFY_API_KEY = getenv('SHOPIFY_API_KEY')
     SHOPIFY_API_SECRET = getenv('SHOPIFY_API_SECRET')

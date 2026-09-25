@@ -30,13 +30,14 @@ dependencies = [
     "Flask-SQLAlchemy < 4",
     "sgqlc < 19",
     "psutil < 8",
-    "pytz == 2026.1.post1",
     "requests < 3",
     "Cerberus < 2",
     "PyJWT < 3",
     "simplejson < 4",
     "click < 9",
-    "python-dateutil < 3"
+    "python-dateutil < 3",
+    # pytz is deprecated and replace with zoneinfo.ZoneInfo + tzdata
+    "tzdata"
 ]
 dynamic = ["version"]
 
